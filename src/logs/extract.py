@@ -8,7 +8,14 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Self
 
-from logs.ruleset import RulesetLogExtract, extract_rulesets, is_ruleset_log, read_text_source
+from logs.ruleset import (
+    BUILDING_RATING_FACTORS,
+    RulesetLogExtract,
+    extract_rulesets,
+    fields_payload,
+    is_ruleset_log,
+    read_text_source,
+)
 from logs.scraper import LogEntry, scrape_logs
 
 
@@ -24,6 +31,7 @@ class ExtractSpec:
     until: str | None = None
     ruleset_name: str | None = None
     satisfied_only: bool = False
+    fields: tuple[str, ...] | None = None
     output_format: str = "raw"
     output_path: str | None = None
 
@@ -37,6 +45,7 @@ class ExtractBuilder:
             ExtractBuilder()
             .from_source("samples/uw_item_rating_building.log")
             .ruleset("Building")
+            .fields(BUILDING_RATING_FACTORS)
             .as_json()
             .extract()
         )
@@ -53,6 +62,7 @@ class ExtractBuilder:
         self._until: str | None = None
         self._ruleset_name: str | None = None
         self._satisfied_only: bool = False
+        self._fields: tuple[str, ...] | None = None
         self._output_format: str = "raw"
         self._output_path: str | None = None
 
@@ -92,6 +102,20 @@ class ExtractBuilder:
         self._satisfied_only = enabled
         return self
 
+    def fields(self, names: list[str] | tuple[str, ...] | None) -> Self:
+        if not names:
+            self._fields = None
+            return self
+        cleaned = tuple(name.strip() for name in names if name and name.strip())
+        if not cleaned:
+            raise ValueError("fields must include at least one non-empty name")
+        self._fields = cleaned
+        return self
+
+    def building_factors(self) -> Self:
+        """Select the standard Building rating factor field set."""
+        return self.fields(BUILDING_RATING_FACTORS)
+
     def format(self, output_format: str) -> Self:
         normalized = output_format.lower().strip()
         if normalized not in self.SUPPORTED_FORMATS:
@@ -127,12 +151,13 @@ class ExtractBuilder:
             until=self._until,
             ruleset_name=self._ruleset_name,
             satisfied_only=self._satisfied_only,
+            fields=self._fields,
             output_format=self._output_format,
             output_path=self._output_path,
         )
 
     def _uses_ruleset_mode(self, spec: ExtractSpec) -> bool:
-        if spec.ruleset_name is not None or spec.satisfied_only:
+        if spec.ruleset_name is not None or spec.satisfied_only or spec.fields is not None:
             return True
         return is_ruleset_log(read_text_source(spec.source))
 
@@ -155,7 +180,11 @@ class ExtractBuilder:
         if payload is None:
             payload = self.collect()
         if isinstance(payload, RulesetLogExtract):
-            return format_ruleset_extract(payload, spec.output_format)
+            return format_ruleset_extract(
+                payload,
+                spec.output_format,
+                fields=spec.fields,
+            )
         return format_extract(payload, spec.output_format)
 
     def write(self, text: str) -> None:
@@ -218,9 +247,16 @@ def format_extract(entries: list[LogEntry], output_format: str = "raw") -> str:
     raise ValueError(f"unsupported format {output_format!r}; choose one of: {supported}")
 
 
-def format_ruleset_extract(extract: RulesetLogExtract, output_format: str = "json") -> str:
+def format_ruleset_extract(
+    extract: RulesetLogExtract,
+    output_format: str = "json",
+    fields: tuple[str, ...] | list[str] | None = None,
+) -> str:
     """Serialize a ruleset extract to JSON, CSV summary, or raw text."""
     normalized = output_format.lower().strip()
+    if fields:
+        return _format_ruleset_fields(extract, normalized, tuple(fields))
+
     data = extract.to_dict()
     if normalized == "json":
         return json.dumps(data, indent=2)
@@ -305,6 +341,51 @@ def format_ruleset_extract(extract: RulesetLogExtract, output_format: str = "jso
                         "value": item.value,
                         "type": "",
                         "kind": "",
+                    }
+                )
+        return buffer.getvalue().rstrip("\n")
+    supported = ", ".join(sorted(ExtractBuilder.SUPPORTED_FORMATS))
+    raise ValueError(f"unsupported format {output_format!r}; choose one of: {supported}")
+
+
+def _format_ruleset_fields(
+    extract: RulesetLogExtract,
+    output_format: str,
+    fields: tuple[str, ...],
+) -> str:
+    payload = fields_payload(extract, fields)
+    if output_format == "json":
+        # Flat map when a single ruleset is selected; otherwise keep ruleset grouping.
+        if len(payload["rulesets"]) == 1:
+            return json.dumps(payload["rulesets"][0]["fields"], indent=2)
+        return json.dumps(
+            {
+                ruleset["name"]: ruleset["fields"]
+                for ruleset in payload["rulesets"]
+            },
+            indent=2,
+        )
+    if output_format == "raw":
+        lines: list[str] = []
+        for ruleset in payload["rulesets"]:
+            if len(payload["rulesets"]) > 1:
+                lines.append(f"RULESET NAME :: {ruleset['name']}")
+            for name, value in ruleset["fields"].items():
+                lines.append(f"{name}={value if value is not None else ''}")
+        return "\n".join(lines)
+    if output_format == "csv":
+        buffer = io.StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=["ruleset", "name", "value", "source", "found"])
+        writer.writeheader()
+        for ruleset in payload["rulesets"]:
+            for detail in ruleset["field_details"]:
+                writer.writerow(
+                    {
+                        "ruleset": ruleset["name"],
+                        "name": detail["name"],
+                        "value": detail["value"] if detail["value"] is not None else "",
+                        "source": detail["source"] or "",
+                        "found": detail["found"],
                     }
                 )
         return buffer.getvalue().rstrip("\n")

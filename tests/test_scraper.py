@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 import pytest
 
@@ -182,3 +183,37 @@ def test_satisfied_only_filters_failed_rulesets() -> None:
     names = [ruleset.name for ruleset in extract.rulesets]
     assert "Building" in names
     assert "BuildBPPSICvgDefaultB2C48" not in names
+
+
+def test_building_rating_factors_extract() -> None:
+    text = (
+        ExtractBuilder()
+        .from_source(str(FIXTURE))
+        .ruleset("Building")
+        .building_factors()
+        .as_json()
+        .extract()
+    )
+    payload = json.loads(text)
+    assert payload == {
+        "LCMFactor": "1.890",
+        "IRPMFactor": "-0.1800000",
+        "PropertyRateNumbers": "18",
+        "OccRelativityFactor": "3.302",
+        "BuiConstructionRelativitiesFactor": "0.759",
+        "BuildingRelativityFactor": "0.4",
+        "PPCFac": "1.0",
+        "BCEGFac": "1",
+        "SprinkledFactor": "1",
+        "400513BCvgFactor": "1",
+        "FixedDedFactor": "0.886",
+        "BaseLCfac": "0.186",
+    }
+
+
+def test_cli_building_factors(capsys: pytest.CaptureFixture[str]) -> None:
+    code = main([str(FIXTURE), "--ruleset", "Building", "--building-factors", "--quiet"])
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["BaseLCfac"] == "0.186"
+    assert payload["FixedDedFactor"] == "0.886"

@@ -7,7 +7,16 @@ import sys
 import requests
 
 from logs.extract import ExtractBuilder
-from logs.ruleset import RulesetLogExtract
+from logs.ruleset import BUILDING_RATING_FACTORS, RulesetLogExtract
+
+
+def _parse_fields(raw: str | None) -> list[str] | None:
+    if raw is None:
+        return None
+    names = [part.strip() for part in raw.split(",") if part.strip()]
+    if not names:
+        raise ValueError("--fields must include at least one field name")
+    return names
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -46,6 +55,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="For ruleset logs, only include rulesets whose precondition was satisfied",
     )
     parser.add_argument(
+        "--fields",
+        help="Comma-separated ruleset field names to extract (inputs/evals/outputs)",
+    )
+    parser.add_argument(
+        "--building-factors",
+        action="store_true",
+        help=(
+            "Extract the standard Building rating factors "
+            f"({', '.join(BUILDING_RATING_FACTORS)})"
+        ),
+    )
+    parser.add_argument(
         "--format",
         choices=sorted(ExtractBuilder.SUPPORTED_FORMATS),
         default=None,
@@ -66,9 +87,22 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    try:
+        field_names = _parse_fields(args.fields)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+    if args.building_factors:
+        field_names = list(BUILDING_RATING_FACTORS)
+
     output_format = args.format
     if output_format is None:
-        output_format = "json" if args.ruleset or args.satisfied_only else "raw"
+        output_format = (
+            "json"
+            if args.ruleset or args.satisfied_only or field_names
+            else "raw"
+        )
 
     try:
         builder = (
@@ -81,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
             .until(args.until)
             .ruleset(args.ruleset)
             .satisfied_only(args.satisfied_only)
+            .fields(field_names)
             .format(output_format)
             .to_file(args.output)
         )

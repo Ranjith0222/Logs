@@ -27,8 +27,8 @@ pytest
 # Line-log extract
 logs samples/app.log --level ERROR
 
-# Building ruleset extract from the UW sample
-logs samples/uw_item_rating_building.log --ruleset Building -o /tmp/building.json
+# Building rating factors from the UW sample
+logs samples/uw_item_rating_building.log --ruleset Building --building-factors
 ```
 
 ## Usage
@@ -48,6 +48,8 @@ logs <path-or-url> [options]
 | `--until TIMESTAMP` | Keep entries at or before this timestamp |
 | `--ruleset NAME` | Extract a UW ruleset execution by name (e.g. `Building`) |
 | `--satisfied-only` | Keep only rulesets whose precondition was satisfied |
+| `--fields A,B,C` | Extract only these ruleset field names |
+| `--building-factors` | Shortcut for the standard Building rating factor set |
 | `--format {raw,json,csv}` | Output format (default: `json` with `--ruleset`, else `raw`) |
 | `-o` / `--output PATH` | Write the extract to a file |
 | `--quiet` | Suppress the match-count line on stderr |
@@ -58,15 +60,15 @@ logs <path-or-url> [options]
 # Errors only
 logs samples/app.log --level ERROR
 
-# JSON extract for disk-related errors
-logs samples/app.log --level ERROR --contains Disk --format json
-
 # Extract the Building ruleset (inputs, evaluations, outputs)
 logs samples/uw_item_rating_building.log --ruleset Building
 
-# CSV summary of Building ruleset fields
-logs samples/uw_item_rating_building.log --ruleset Building --format csv \
-  -o /tmp/building.csv
+# Extract specific Building rating factors
+logs samples/uw_item_rating_building.log --ruleset Building --building-factors
+
+# Same factors via explicit field list
+logs samples/uw_item_rating_building.log --ruleset Building \
+  --fields LCMFactor,IRPMFactor,PropertyRateNumbers,OccRelativityFactor,BuiConstructionRelativitiesFactor,BuildingRelativityFactor,PPCFac,BCEGFac,SprinkledFactor,400513BCvgFactor,FixedDedFactor,BaseLCfac
 ```
 
 ## Extract builder (library)
@@ -78,16 +80,14 @@ text = (
     ExtractBuilder()
     .from_source("samples/uw_item_rating_building.log")
     .ruleset("Building")
+    .building_factors()
     .as_json()
-    .to_file("/tmp/building.json")
     .extract()
 )
 ```
 
-Ruleset extracts include:
+`--building-factors` selects:
 
-- run header (`module_id`, `project_id`, `policy_no`, `effective_date`, …)
-- precondition status / expression
-- input variables (name, path, type, value)
-- formula / decision-table evaluations
-- output variables
+`LCMFactor`, `IRPMFactor`, `PropertyRateNumbers`, `OccRelativityFactor`,
+`BuiConstructionRelativitiesFactor`, `BuildingRelativityFactor`, `PPCFac`,
+`BCEGFac`, `SprinkledFactor`, `400513BCvgFactor`, `FixedDedFactor`, `BaseLCfac`

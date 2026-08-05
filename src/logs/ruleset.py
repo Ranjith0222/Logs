@@ -79,6 +79,32 @@ class RulesetExecution:
     outputs: list[RulesetVariable] = field(default_factory=list)
 
 
+# Common Building rating factors requested from UW ItemRating logs.
+BUILDING_RATING_FACTORS: tuple[str, ...] = (
+    "LCMFactor",
+    "IRPMFactor",
+    "PropertyRateNumbers",
+    "OccRelativityFactor",
+    "BuiConstructionRelativitiesFactor",
+    "BuildingRelativityFactor",
+    "PPCFac",
+    "BCEGFac",
+    "SprinkledFactor",
+    "400513BCvgFactor",
+    "FixedDedFactor",
+    "BaseLCfac",
+)
+
+
+@dataclass
+class FieldValue:
+    name: str
+    value: str | None
+    source: str | None = None  # input | evaluation | output
+    kind: str | None = None
+    found: bool = False
+
+
 @dataclass
 class RulesetLogExtract:
     header: RulesetHeader
@@ -89,6 +115,83 @@ class RulesetLogExtract:
             "header": asdict(self.header),
             "rulesets": [asdict(ruleset) for ruleset in self.rulesets],
         }
+
+
+def pick_field_values(
+    execution: RulesetExecution,
+    field_names: list[str] | tuple[str, ...],
+) -> list[FieldValue]:
+    """Resolve named fields from inputs, evaluations, then outputs.
+
+    For evaluations, the last occurrence wins (final evaluated value).
+    """
+    inputs = {item.name: item for item in execution.inputs}
+    outputs = {item.name: item for item in execution.outputs}
+    evaluations: dict[str, RulesetEvaluation] = {}
+    for item in execution.evaluations:
+        evaluations[item.name] = item
+
+    selected: list[FieldValue] = []
+    for name in field_names:
+        if name in inputs:
+            selected.append(
+                FieldValue(
+                    name=name,
+                    value=inputs[name].value,
+                    source="input",
+                    found=True,
+                )
+            )
+            continue
+        if name in evaluations:
+            item = evaluations[name]
+            selected.append(
+                FieldValue(
+                    name=name,
+                    value=item.value,
+                    source="evaluation",
+                    kind=item.kind,
+                    found=True,
+                )
+            )
+            continue
+        if name in outputs:
+            selected.append(
+                FieldValue(
+                    name=name,
+                    value=outputs[name].value,
+                    source="output",
+                    found=True,
+                )
+            )
+            continue
+        selected.append(FieldValue(name=name, value=None, found=False))
+    return selected
+
+
+def fields_payload(
+    extract: RulesetLogExtract,
+    field_names: list[str] | tuple[str, ...],
+) -> dict[str, Any]:
+    """Build a field-focused payload for one or more rulesets."""
+    rulesets = []
+    for execution in extract.rulesets:
+        selected = pick_field_values(execution, field_names)
+        rulesets.append(
+            {
+                "name": execution.name,
+                "precondition": asdict(execution.precondition),
+                "fields": {
+                    item.name: item.value for item in selected
+                },
+                "field_details": [asdict(item) for item in selected],
+            }
+        )
+    return {
+        "header": asdict(extract.header),
+        "requested_fields": list(field_names),
+        "rulesets": rulesets,
+    }
 
 
 def is_ruleset_log(text: str) -> bool:
