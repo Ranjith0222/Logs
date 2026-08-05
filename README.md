@@ -1,7 +1,7 @@
 # Logs
 
-A small Python CLI for scraping, filtering, and building extracts from structured log files
-(local paths or URLs).
+A small Python CLI for scraping structured logs and extracting UW ruleset execution
+data from local paths or URLs.
 
 ## Requirements
 
@@ -24,8 +24,11 @@ ruff check .
 # Test
 pytest
 
-# Run the CLI against the sample log file
+# Line-log extract
 logs samples/app.log --level ERROR
+
+# Building ruleset extract from the UW sample
+logs samples/uw_item_rating_building.log --ruleset Building -o /tmp/building.json
 ```
 
 ## Usage
@@ -43,7 +46,9 @@ logs <path-or-url> [options]
 | `--regex PATTERN` | Keep messages matching this regular expression |
 | `--since TIMESTAMP` | Keep entries at or after this timestamp |
 | `--until TIMESTAMP` | Keep entries at or before this timestamp |
-| `--format {raw,json,csv}` | Output format (default: `raw`) |
+| `--ruleset NAME` | Extract a UW ruleset execution by name (e.g. `Building`) |
+| `--satisfied-only` | Keep only rulesets whose precondition was satisfied |
+| `--format {raw,json,csv}` | Output format (default: `json` with `--ruleset`, else `raw`) |
 | `-o` / `--output PATH` | Write the extract to a file |
 | `--quiet` | Suppress the match-count line on stderr |
 
@@ -56,25 +61,33 @@ logs samples/app.log --level ERROR
 # JSON extract for disk-related errors
 logs samples/app.log --level ERROR --contains Disk --format json
 
-# CSV extract for a time window
-logs samples/app.log --since "2026-08-05 10:00:02" --until "2026-08-05 10:00:04" \
-  --format csv -o /tmp/slice.csv
+# Extract the Building ruleset (inputs, evaluations, outputs)
+logs samples/uw_item_rating_building.log --ruleset Building
+
+# CSV summary of Building ruleset fields
+logs samples/uw_item_rating_building.log --ruleset Building --format csv \
+  -o /tmp/building.csv
 ```
 
 ## Extract builder (library)
-
-Compose extracts programmatically with the fluent builder:
 
 ```python
 from logs import ExtractBuilder
 
 text = (
     ExtractBuilder()
-    .from_source("samples/app.log")
-    .level("ERROR")
-    .contains("Disk")
+    .from_source("samples/uw_item_rating_building.log")
+    .ruleset("Building")
     .as_json()
-    .to_file("/tmp/errors.json")
+    .to_file("/tmp/building.json")
     .extract()
 )
 ```
+
+Ruleset extracts include:
+
+- run header (`module_id`, `project_id`, `policy_no`, `effective_date`, …)
+- precondition status / expression
+- input variables (name, path, type, value)
+- formula / decision-table evaluations
+- output variables

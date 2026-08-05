@@ -7,6 +7,7 @@ import sys
 import requests
 
 from logs.extract import ExtractBuilder
+from logs.ruleset import RulesetLogExtract
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,10 +37,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Only include entries at or before this timestamp (lexicographic compare)",
     )
     parser.add_argument(
+        "--ruleset",
+        help="Extract a UW ruleset execution by name (e.g. Building)",
+    )
+    parser.add_argument(
+        "--satisfied-only",
+        action="store_true",
+        help="For ruleset logs, only include rulesets whose precondition was satisfied",
+    )
+    parser.add_argument(
         "--format",
         choices=sorted(ExtractBuilder.SUPPORTED_FORMATS),
-        default="raw",
-        help="Output format for the extract (default: raw)",
+        default=None,
+        help="Output format for the extract (default: json for rulesets, raw otherwise)",
     )
     parser.add_argument(
         "-o",
@@ -56,6 +66,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    output_format = args.format
+    if output_format is None:
+        output_format = "json" if args.ruleset or args.satisfied_only else "raw"
+
     try:
         builder = (
             ExtractBuilder()
@@ -65,11 +79,13 @@ def main(argv: list[str] | None = None) -> int:
             .matching(args.pattern)
             .since(args.since)
             .until(args.until)
-            .format(args.format)
+            .ruleset(args.ruleset)
+            .satisfied_only(args.satisfied_only)
+            .format(output_format)
             .to_file(args.output)
         )
-        entries = builder.collect()
-        text = builder.render(entries)
+        payload = builder.collect()
+        text = builder.render(payload)
         if args.output:
             builder.write(text)
         elif text:
@@ -88,7 +104,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if not args.quiet:
-        print(f"Matched {len(entries)} log entries.", file=sys.stderr)
+        count = (
+            len(payload.rulesets)
+            if isinstance(payload, RulesetLogExtract)
+            else len(payload)
+        )
+        label = "rulesets" if isinstance(payload, RulesetLogExtract) else "log entries"
+        print(f"Matched {count} {label}.", file=sys.stderr)
     return 0
 
 

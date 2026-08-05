@@ -4,6 +4,7 @@ import pytest
 
 from logs.cli import main
 from logs.extract import ExtractBuilder, format_extract
+from logs.ruleset import extract_rulesets
 from logs.scraper import parse_log_line, scrape_logs
 
 SAMPLE_LINES = "\n".join(
@@ -14,6 +15,8 @@ SAMPLE_LINES = "\n".join(
         "2026-08-05 10:00:03 ERROR Failed to rotate logs",
     ]
 )
+
+FIXTURE = Path(__file__).parent / "fixtures" / "building_ruleset_snippet.log"
 
 
 @pytest.fixture
@@ -120,3 +123,62 @@ def test_cli_extract_json(sample_log: Path, capsys: pytest.CaptureFixture[str]) 
     captured = capsys.readouterr()
     assert '"Disk full"' in captured.out
     assert captured.err == ""
+
+
+def test_extract_building_ruleset_from_fixture() -> None:
+    extract = extract_rulesets(str(FIXTURE), ruleset_name="Building")
+    assert extract.header.module_id == "UW"
+    assert extract.header.project_id == "FICUW_ItemRating"
+    assert extract.header.policy_no == "PMBP001030043Z02000"
+    assert len(extract.rulesets) == 1
+
+    building = extract.rulesets[0]
+    assert building.name == "Building"
+    assert building.precondition.status == "satisfied"
+    assert "IUWP1_MGA_ID IN MGA1" in (building.precondition.expression or "")
+
+    inputs = {item.name: item for item in building.inputs}
+    assert inputs["BuildingLimit"].value == "1516320.00"
+    assert inputs["BuildingLimit"].type == "NUMBER"
+    assert inputs["State"].value == "MI"
+    assert inputs["BuildingID"].value == "0001"
+    assert inputs["Source"].value == "B2B"
+
+    outputs = {item.name: item.value for item in building.outputs}
+    assert outputs["BuildingCoverBaseRate"] == "0.1650000"
+    assert outputs["BuildingCoverIncrementalPrem"] == "3882.0000000"
+    assert outputs["BuildingCoverIncrementalSI"] == "1516320.00"
+    assert outputs["CoverageNewPremium"] == "3882.0000000"
+
+    evaluations = {item.name: item for item in building.evaluations}
+    assert evaluations["ClassCode"].value == "09031_5812_722211"
+    assert evaluations["ClassCode"].kind == "formula"
+    assert evaluations["PropertyRateNumbers"].kind == "decision_table"
+    assert evaluations["FinICvgPrem"].value == "3882.0000000"
+
+
+def test_extract_builder_ruleset_json() -> None:
+    text = (
+        ExtractBuilder()
+        .from_source(str(FIXTURE))
+        .ruleset("Building")
+        .as_json()
+        .extract()
+    )
+    assert '"name": "Building"' in text
+    assert "BuildingCoverAnnPrem" in text
+
+
+def test_cli_building_ruleset(capsys: pytest.CaptureFixture[str]) -> None:
+    code = main([str(FIXTURE), "--ruleset", "Building", "--quiet"])
+    assert code == 0
+    captured = capsys.readouterr()
+    assert '"BuildingCoverIncrementalSI"' in captured.out
+    assert "Matched" not in captured.err
+
+
+def test_satisfied_only_filters_failed_rulesets() -> None:
+    extract = extract_rulesets(str(FIXTURE), satisfied_only=True)
+    names = [ruleset.name for ruleset in extract.rulesets]
+    assert "Building" in names
+    assert "BuildBPPSICvgDefaultB2C48" not in names

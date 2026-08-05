@@ -1,0 +1,677 @@
+DETAIL OF RULE SET EXECUTION FOR BELOW MENTIONED PARAMETER
+	Module Id :: UW
+	Project Id :: FICUW_ItemRating
+	Param Values :: 400::400
+	Effective Date :: Wed Sep 30 00:00:00 EDT 2026
+	Policy No + Endt No :: PMBP001030043Z02000
+
+
+NUMBER OF RULE SETS :: 413
+
+
+
+RULESET NAME :: BuildBPPSICvgDefaultB2C48
+
+
+
+	PRE-CONDITION OCCURRENCE COUNT ::1
+
+
+	Pre-Condition Failed for :: source IN FG::&&::IUWP1_ENDT_REAS IN 48
+
+
+
+
+RULESET NAME :: Building
+
+
+
+	PRE-CONDITION OCCURRENCE COUNT ::1
+
+
+	Pre-Condition Satisfied for :: IUWP1_ENDT_REAS NOTIN 23,31,45,47,11,49::&&::IUWP1_ENDT_CD NOTIN 02,11::&&::IUWP1_MGA_ID IN MGA1
+
+	RULESET - INPUT VARIABLE AND VALUES ARE
+
+
+		TypeOfContruction = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_STRUC_TYP,STRING
+		TypeOfContruction = [4]
+
+		Territory = itemSectionVOList%00001010000000%.IUWP2_TERR_CD,STRING
+		Territory = 704
+
+		BuildingLimit = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.IncrementalSI,NUMBER
+		BuildingLimit = [1516320.00]
+
+		FireProtectionClass = itemSectionVOList%00001010000000%.itemSectionRiskVO.IUWP2_FR_PROTECTION_CLASS,STRING
+		FireProtectionClass = 1
+
+		BusinessPersonalPropLimit = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400102%.IncrementalSI,NUMBER
+		BusinessPersonalPropLimit = [5000.00]
+
+		State = IUWP1_PRM_RATING_STATE,STRING
+		State = MI
+
+		TClassCode = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_PRED_BLDNG_CLASS_CODE,STRING
+		TClassCode = [09031_5812_722211]
+
+		Grade = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_BCEG,STRING
+		Grade = [99]
+
+		WHDeduct = itemSectionVOList%00001010000000%.itemSectionRiskVO.IUWP2_FR_DEDUCT2,STRING
+		WHDeduct = 2
+
+		FixedDeduct = itemSectionVOList%00001010000000%.itemSectionRiskVO.IUWP2_FR_DEDUCT1,STRING
+		FixedDeduct = 3
+
+		Sprinkler = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_AUTMTC_FR_SPRNKLR,BOOLEAN
+		Sprinkler = [N]
+
+		PDBCAllBuildings = itemSectionVOList%00001010000000%.itemSectionRiskVO.IUWP2_FR_PRED_BLDNG_CLASS_CODE,STRING
+		PDBCAllBuildings =  
+
+		LCMFactor = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400102%.LCM,NUMBER
+		LCMFactor = [1.890]
+
+		IRPMFactor = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400102%.SystemRate,NUMBER
+		IRPMFactor = [-0.1800000]
+
+		BuildingAddedCvgs = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList[*].coverCode,STRING
+		BuildingAddedCvgs = [400101, 400102, 400103, 400104, 400105, 400106, 400107, 400108, 400109, 400110, 400111, 400112, 400113, 400114, 400115, 400116, 400117, 400118, 400119, 400120, 400121, 400122, 400123, 400124, 400125, 400126, 400127, 400128, 400129, 400130, 400133, 400136, 400151, 400153, 400154, 400178, 400191, 400197, 400219, 400230, 400231, 400298, 400301, 400305, 400314, 400322, 400323, 400324, 400326, 400327, 400328, 400329, 400330, 400335, 400337, 400336, 400444, 400445, 400440, 400446, 400447, 400448, 400449, 400450, 400451, 400452, 400455, 400456, 400457, 400484, 400485, 400489, 400490, 400491, 400492, 400493, 400494, 400495, 400502, 400513, 400701, 400702, 400703, 400999, 999991]
+
+		B2CRCFlag = itemSectionVOList%00001010000000%.CoverageVOList%400101%.IUWP3_RECALC_FLG,STRING
+		B2CRCFlag = Y
+
+		Source = source,STRING
+		Source = B2B
+
+		BuildingID = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_BLDNG_ID,STRING
+		BuildingID = [0001]
+
+		BuildingAction = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_ACTION,STRING
+		BuildingAction = [E]
+
+		EndtReas = IUWP1_ENDT_REAS,STRING
+		EndtReas = 12
+
+		ItemEndReas = itemSectionVOList%00001010000000%.IUWP2_ENDT_REAS,STRING
+		ItemEndReas = 12
+
+		400101BCvgOldSI = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.OldCummulativeSI,NUMBER
+		400101BCvgOldSI = [0.00]
+
+		400102BCvgOldSI = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400102%.OldCummulativeSI,NUMBER
+		400102BCvgOldSI = [0.00]
+
+		BIIndemnityPeriodBLimit = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400513%.IncrementalSI,NUMBER
+		BIIndemnityPeriodBLimit = [12.00]
+
+		FromDate = IUWP1_ICP_DT,DATE
+		FromDate = 09/30/2026
+
+		ToDate = IUWP1_EXP_DT,DATE
+		ToDate = 09/30/2027
+
+		EffectiveDate = IUWP1_EFF_DT,DATE
+		EffectiveDate = 09/30/2026
+
+		OldBCumPrem = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.OldCummulativePrem,NUMBER
+		OldBCumPrem = [0.00]
+
+		OldICumPrem = itemSectionVOList%00001010000000%.CoverageVOList%400101%.IUWP3_OLD_CUM_PREM,NUMBER
+		OldICumPrem = 0.00
+
+		OldBCumSI = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.OldCummulativeSI,NUMBER
+		OldBCumSI = [0.00]
+
+		OldICumSI = itemSectionVOList%00001010000000%.CoverageVOList%400101%.IUWP3_OLD_CUM_SI,NUMBER
+		OldICumSI = 0.00
+
+		BuildingAction1 = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[0].IUWP2_BLDNG_ACTION,STRING
+		BuildingAction1 = E
+
+		BuildingAction2 = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[1].IUWP2_BLDNG_ACTION,STRING
+				Error While getting the Value by Index for the Index No :: 1
+				Error Desc :: Array index out of bound
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NoSuchMethodException
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NullPointerException
+		BuildingAction2 =  
+
+		BuildingAction3 = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[2].IUWP2_BLDNG_ACTION,STRING
+				Error While getting the Value by Index for the Index No :: 2
+				Error Desc :: Array index out of bound
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NoSuchMethodException
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NullPointerException
+		BuildingAction3 =  
+
+		BuildingAction4 = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[3].IUWP2_BLDNG_ACTION,STRING
+				Error While getting the Value by Index for the Index No :: 3
+				Error Desc :: Array index out of bound
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NoSuchMethodException
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NullPointerException
+		BuildingAction4 =  
+
+		BuildingAction5 = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[4].IUWP2_BLDNG_ACTION,STRING
+				Error While getting the Value by Index for the Index No :: 4
+				Error Desc :: Array index out of bound
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NoSuchMethodException
+				Error While getting the Value for the ColumnName :: IUWP2_BLDNG_ACTION
+				Error Type :: NullPointerException
+		BuildingAction5 =  
+
+		BuildingCvgBuildingID = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.buidlingID,STRING
+		BuildingCvgBuildingID = [0001]
+
+		BuildingRCFlag = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.recalc_Flag,STRING
+		BuildingRCFlag = [Y]
+
+		BuildingCvgCode = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.coverCode,STRING
+		BuildingCvgCode = [400101]
+
+		ItemNo = itemSectionVOList%00001010000000%.IUWP2_ITEM_NO,STRING
+		ItemNo = 00001
+
+		WindDeduct = itemSectionVOList%00001010000000%.itemSectionRiskVO.IUWP2_FR_DEDUCT2,STRING
+		WindDeduct = 2
+
+		WindStormDisplayFlag = itemSectionVOList%00001010000000%.IUWP2_WINDSTORM_DED_DISPLAY,STRING
+		WindStormDisplayFlag = Y
+
+		400101OldBAnnualPremium = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.old_Annual_Prem,NUMBER
+		400101OldBAnnualPremium = [0.00]
+
+		400101OldIAnnualPremium = itemSectionVOList%00001010000000%.CoverageVOList%400101%.IUWP3_OLD_ANNUAL_PRM,NUMBER
+		400101OldIAnnualPremium = 0.00
+
+		PrimaryBuilding = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_PRIMARY_BLDNG,STRING
+		PrimaryBuilding = [Y]
+
+		PrmLocFlg = itemSectionVOList%00001010000000%.IUWP2_PRIMARY_LOCATION_FLAG,STRING
+		PrmLocFlg = Y
+
+		HazardHubCrimeFac = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].IUWP2_BLDNG_HAZARD_CRIME_FACTOR,STRING
+		HazardHubCrimeFac = [114]
+
+		QuoteNo = IUWP1_QUOT_NO,STRING
+		QuoteNo = QBOP015864
+
+		PolNo = IUWP1_POL_NO,STRING
+		PolNo = PMBP001030043Z02
+
+		BUserSI = itemSectionVOList%00001010000000%.itemSectionRiskVO.buildingVOList[*].buildingCoverageVOList%400101%.userSI,NUMBER
+		BUserSI = [1516320.00]
+
+	RuleSet - Formulae/Decistion Table VALUES ARE
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			ClassCode = [<#if ' ' == ' ' > ${" 09031_5812_722211 "} <#else> ${"   "}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			ClassCode = [09031_5812_722211]
+
+		Decision Table Evaluation :: PropertyRateNumbers = [18]
+		Decision Table Evaluation :: GroupType = B
+		Decision Table Evaluation :: OccRelativityFactor = [3.302]
+		Decision Table Evaluation :: BuiConstructionRelativitiesFactor = [0.759]
+		Decision Table Evaluation :: TBuildingRelativityFactor = [0.4]
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			33BuildingLimit = [${1516320.00 + 0.00}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			33BuildingLimit = [1516320.0000000]
+
+		Decision Table Evaluation :: 33TBuildingRelativityFactor = [0.4]
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			BuildingRelativityFactor = [<#if ( 1516320.00 == 0 && '12' != '33' ) > ${"1"} <#elseif ( 1516320.0000000 == 0 && '12' == '33' ) > ${"1"} <#elseif ( '12' == '33' ) > ${" 0.4 "} <#else> ${" 0.4 "}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			BuildingRelativityFactor = [0.4]
+
+		Decision Table Evaluation :: PPCFac = 1.0
+		Decision Table Evaluation :: BCEGFacOTST = [1]
+		Decision Table Evaluation :: BCEGFacNC = [1]
+		Decision Table Evaluation :: BCEGFacSC = [1]
+		Decision Table Evaluation :: BCEGFacVA = [1]
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			BCEGFac = [<#if ( 'MI' == 'NC' ) > ${" 1 "} <#elseif ( 'MI' == 'SC' ) > ${" 1 "} <#elseif ( 'MI' == 'VA' ) > ${" 1 "} <#else> ${" 1 "}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			BCEGFac = [1]
+
+		Decision Table Evaluation :: TempSprinkledFactor = [0.65]
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			SprinkledFactor = [<#if 'N' == 'Y' > ${" 0.65 "} <#else> ${"1"}</#if>]
+			400513BCvgFactor = [<#if ( '12.00' == '12.00' ) > ${"1"} <#elseif ( '12.00' == '6.00' ) > ${"0.97"} <#elseif ( '12.00' == '9.00' ) > ${"0.99"} <#elseif ( '12.00' == '18.00' ) > ${"1.02"} <#else> ${"1"}</#if>]
+			BuildBusiPerPropLimit = [<#if ( '12' == '51' ) > ${"( 0.00 + 0.00 )"} <#elseif ( '12' == '33' ) > ${"( 0.00 + 0.00 + 1516320.00 + 5000.00 )"} <#else> ${"( 1516320.00 + 5000.00 )"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			SprinkledFactor = [1]
+			400513BCvgFactor = [1]
+			BuildBusiPerPropLimit = [1521320.0000000]
+
+		Decision Table Evaluation :: FixedDedFactorOTST = [0.957]
+		Decision Table Evaluation :: WindDed500OT = [0.919]
+		Decision Table Evaluation :: WindDed1000OT = [0.910]
+		Decision Table Evaluation :: WindDed2500OT = [0.886]
+		Decision Table Evaluation :: WindDed5000OT = [0.855]
+		Decision Table Evaluation :: WindDed7500OT = [0.831]
+		Decision Table Evaluation :: WindDed10000OT = [0.811]
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			WindDedFacOTST = [<#if ( '3' == '1' ) > ${" 0.919 "} <#elseif ( '3' == '2' ) > ${" 0.910 "} <#elseif ( '3' == '3' ) > ${" 0.886 "} <#elseif ( '3' == '4' ) > ${" 0.855 "} <#elseif ( '3' == '5' ) > ${" 0.831 "} <#else> ${" 0.811 "}</#if>]
+			OTSTCheck = <#if ( ( 'MI' == 'OH' ) || ( 'MI' == 'IN' ) || ( 'MI' == 'MI' ) || ( 'MI' == 'PA' ) || ( 'MI' == 'TN' ) || ( 'MI' == 'VA' ) ) > ${"A"} <#else> ${"B"}</#if>
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			WindDedFacOTST = [0.886]
+			OTSTCheck = A
+
+		Decision Table Evaluation :: FixedDedFactorNC = [0.962]
+		Decision Table Evaluation :: WindDed500 = [0.895]
+		Decision Table Evaluation :: WindDed1000 = [0.887]
+		Decision Table Evaluation :: WindDed2500 = [0.871]
+		Decision Table Evaluation :: WindDed5000 = [0.852]
+		Decision Table Evaluation :: WindDed7500 = [0.838]
+		Decision Table Evaluation :: WindDed10000 = [0.826]
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			WindDedFacNCSC = [<#if ( '3' == '1' ) > ${" 0.895 "} <#elseif ( '3' == '2' ) > ${" 0.887 "} <#elseif ( '3' == '3' ) > ${" 0.871 "} <#elseif ( '3' == '4' ) > ${" 0.852 "} <#elseif ( '3' == '5' ) > ${" 0.838 "} <#else> ${" 0.826 "}</#if>]
+			NCSCChck = <#if ( ( 'MI' == 'NC' ) || ( 'MI' == 'SC' ) ) > ${"A"} <#else> ${"B"}</#if>
+			WindDedOTSTCheck = <#if ( ( '2' == '1' ) || ( '2' == '2' ) || ( '2' == '5' ) ) > ${"A"} <#else> ${"B"}</#if>
+			FinalBuildingBPPLimit = [<#if ( '12' == '51' ) > ${"( 0.00 + 0.00 )"} <#elseif ( '12' == '33' ) > ${"( 0.00 + 0.00 + 1516320.00 + 5000.00 )"} <#else> ${"( 1516320.00 + 5000.00 )"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			WindDedFacNCSC = [0.871]
+			NCSCChck = B
+			WindDedOTSTCheck = A
+			FinalBuildingBPPLimit = [1521320.0000000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			WHNACheck1 = [<#if ( ( '3' == '1' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#else> ${"B"}</#if>]
+			WHNACheck2 = [<#if ( ( '3' == '2' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '2' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#else> ${"B"}</#if>]
+			WHNACheck3 = [<#if ( ( '3' == '3' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '3' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '3' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '3' ) ) > ${"A"} <#elseif ( ( '3' == '3' ) && ( ( 1521320.0000000 &gt; 50000 ) && ( 1521320.0000000 &lt;= 250000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#else> ${"B"}</#if>]
+			WHNACheck4 = [<#if ( ( '3' == '4' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '4' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '4' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '3' ) ) > ${"A"} <#elseif ( ( '3' == '4' ) && ( ( 1521320.0000000 &gt; 50000 ) && ( 1521320.0000000 &lt;= 250000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '4' ) && ( ( 1521320.0000000 &gt; 50000 ) && ( 1521320.0000000 &lt;= 250000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '4' ) && ( ( 1521320.0000000 &gt; 250000 ) && ( 1521320.0000000 &lt;= 500000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#else> ${"B"}</#if>]
+			WHNACheck5 = [<#if ( ( '3' == '5' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '5' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '5' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '3' ) ) > ${"A"} <#elseif ( ( '3' == '5' ) && ( ( 1521320.0000000 &gt; 50000 ) && ( 1521320.0000000 &lt;= 250000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '5' ) && ( ( 1521320.0000000 &gt; 50000 ) && ( 1521320.0000000 &lt;= 250000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '5' ) && ( ( 1521320.0000000 &gt; 250000 ) && ( 1521320.0000000 &lt;= 500000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#else> ${"B"}</#if>]
+			WHNACheck6 = [<#if ( ( '3' == '6' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '6' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '6' ) && ( 1521320.0000000 &lt;= 50000 ) && ( 'Y' == 'Y' ) && ( '2' == '3' ) ) > ${"A"} <#elseif ( ( '3' == '6' ) && ( ( 1521320.0000000 &gt; 50000 ) && ( 1521320.0000000 &lt;= 250000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#elseif ( ( '3' == '6' ) && ( ( 1521320.0000000 &gt; 50000 ) && ( 1521320.0000000 &lt;= 250000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '6' ) && ( ( 1521320.0000000 &gt; 250000 ) && ( 1521320.0000000 &lt;= 500000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#else> ${"B"}</#if>]
+			WHNACheck7 = [<#if ( ( '3' == '6' ) && ( ( 1521320.0000000 &gt; 250000 ) && ( 1521320.0000000 &lt;= 500000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '2' ) ) > ${"A"} <#elseif ( ( '3' == '6' ) && ( ( 1521320.0000000 &gt; 500000 ) && ( 1521320.0000000 &lt;= 1000000 ) ) && ( 'Y' == 'Y' ) && ( '2' == '1' ) ) > ${"A"} <#else> ${"B"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			WHNACheck1 = [B]
+			WHNACheck2 = [B]
+			WHNACheck3 = [B]
+			WHNACheck4 = [B]
+			WHNACheck5 = [B]
+			WHNACheck6 = [B]
+			WHNACheck7 = [B]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FinalWHNACheck = [<#if ( 'B' == 'A' || 'B' == 'A' || 'B' == 'A' || 'B' == 'A' || 'B' == 'A' || 'B' == 'A' || 'B' == 'A' ) > ${"A"} <#else> ${"B"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FinalWHNACheck = [B]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FixedDedFactor = [<#if ( 'QBOP015864' == 'QBOP013063' && '0001' == '0009' ) > ${"1"} <#elseif ( ( 'B' == 'A' ) && ( 'Y' == 'N' ) ) > ${" 0.962 "} <#elseif ( ( 'B' == 'A' ) && ( 'Y' == 'Y' ) && ( 'B' == 'A' ) ) > ${" 0.962 "} <#elseif ( ( 'B' == 'A') && ( 'Y' == 'Y' ) && ( 'B' == 'B' ) ) > ${" 0.871 "} <#elseif ( ( 'A' == 'A' ) && ( 'A' == 'A' ) ) > ${" 0.886 "} <#else> ${" 0.957 "}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FixedDedFactor = [0.886]
+
+		Decision Table Evaluation :: BaseLCfac = 0.186
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			TBuildingBaseRate = [<#if  ( 'PMBP001030043Z02' == 'PMBP001030229Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029333Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'QBOP015864' == 'QBOP026758' ) > ${"( 3.302 * 0.759 * 0.4 * 1.0 *1* 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029278Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029172Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029134Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030378Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030364Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030261Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029082Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030229Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030212Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029046Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030094Z01' ) > ${"( 3.302 * 0.759 * 0.4 * 1.0 * 1 *1* 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029024Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030163Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030172Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030145Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001030078Z01' ) > ${"(0.704* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029395Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029413Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029278Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029333Z01' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'PMBP001030043Z02' == 'PMBP001029336Z02' ) > ${"(1* 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"} <#elseif ( 'QBOP015864' == 'QBOP015608' ) > ${"( 3.302 * 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 *0.505* 1 )"} <#elseif ( 'QBOP015864' == 'QBOP018046' ) > ${"( 3.302 * 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 *0.376* 1 )"} <#elseif ( 'QBOP015864' == 'QBOP019518' ) > ${"( 3.302 * 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 *0.293* 1 )"} <#elseif ( 'QBOP015864' == 'QBOP018680' ) > ${"( 3.302 * 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 *0.293* 1 )"} <#else> ${"( 3.302 * 0.759 * 0.4 * 1.0 * 1 * 1 * 0.886 * 0.186 * 1 )"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			TBuildingBaseRate = [0.1652059]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			T1BuildingBaseRate = [${roundOf('0.1652059',3 )}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			T1BuildingBaseRate = [0.1650000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			BuildingBaseRate = [<#if ( 'QBOP015864' == 'QBOP025332' ) > ${"( 0.1650000 -0.969)"} <#elseif ( 'QBOP015864' == 'QBOP026780' ) > ${"( 0.1650000 -0.168)"} <#else> ${" 0.1650000 "}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			BuildingBaseRate = [0.1650000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			TFinalRate = [${0.1650000 * 1.890 * ( 1 + -0.1800000 )}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			TFinalRate = [0.2557170]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FinalRate = [${roundOf('0.2557170',3 )}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FinalRate = [0.2560000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			BuildingPremium = [<#if ( '12' == '51' ) > ${"( 0.2560000 *( 0.00 /100))"} <#else> ${"( 0.2560000 *( 1516320.00 /100))"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			BuildingPremium = [3881.7792000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FinalBuildingPremium = [${roundUp('3881.7792000',0 )}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FinalBuildingPremium = [3882.0000000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			TotalBuildingCvgPremium = ${sumValue(3882.0000000)}
+			T1FGRCFlag = [<#if '400101' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400102' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400103' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400104' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400105' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400106' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400107' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400108' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400109' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400110' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400111' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400112' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400113' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400114' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400115' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400116' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400117' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400118' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400119' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400120' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400121' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400122' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400123' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400124' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400125' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400126' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400127' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400128' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400129' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400130' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400133' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400136' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400151' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400153' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400154' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400178' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400191' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400197' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400219' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400230' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400231' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400298' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400301' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400305' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400314' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400322' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400323' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400324' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400326' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400327' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400328' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400329' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400330' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400335' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400337' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400336' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400444' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400445' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400440' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400446' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400447' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400448' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400449' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400450' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400451' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400452' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400455' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400456' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400457' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400484' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400485' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400489' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400490' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400491' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400492' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400493' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400494' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400495' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400502' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400513' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400701' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400702' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400703' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '400999' == '400101' > ${"1"} <#else> ${"0"}</#if>, <#if '999991' == '400101' > ${"1"} <#else> ${"0"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			TotalBuildingCvgPremium = 3882.0000000
+			T1FGRCFlag = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			T2FGRCFlag = ${sumValue(1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)}
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			T2FGRCFlag = 1.0000000
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FinalCvgRCFlagValue = [<#if ( '12' == '00' && 'B2B' == 'FG' && 1.0000000 &gt; 0 ) > ${"Y"} <#elseif ( '12' == '00' && 'B2B' == 'FG' && 1.0000000 == 0 ) > ${"N"} <#elseif ( '12' == '12' && 'B2B' == 'FG' && 'Y' == 'Y' ) > ${"Y"} <#elseif ( '12' == '12' && 'B2B' == 'FG' && 'Y' == 'N' ) > ${"N"} <#elseif ( '12' == '06' && 'B2B' == 'FG' && 'Y' == 'Y' ) > ${"Y"} <#elseif ( '12' == '06' && 'B2B' == 'FG' && 'Y' == 'N' ) > ${"N"} <#elseif ( '12' == '48' && 'E' == 'N' && 'B2B' == 'FG' && 1.0000000 &gt; 0 ) > ${"Y"} <#elseif ( '12' == '48' && 'E' == 'N' && 'B2B' == 'FG' && 1.0000000 == 0 ) > ${"N"} <#else> ${" Y "}</#if>]
+			T33BRCFlag = [<#if ( 'Y' == 'N' ) > ${"1"} <#else> ${"0"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FinalCvgRCFlagValue = [Y]
+			T33BRCFlag = [0]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			S33BRCFlag = ${sumValue(0)}
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			S33BRCFlag = 0
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			Final33ItemRCFlag = <#if ( 0 &gt; 0 ) > ${"N"} <#else> ${"Y"}</#if>
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			Final33ItemRCFlag = Y
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			BuildingRCFlagValue = [<#if ( ( '0001' != '9999' ) && ( '12' != '33' ) ) > ${" Y "} <#elseif ( ( '0001' != '9999' ) && ( '12' == '33' ) ) > ${" Y "} <#else> ${"N"}</#if>]
+			EBBuildingBasePremium = [<#if ( '12' == '51' ) > ${"( 0.1650000 *( 0.00 /100))"} <#else> ${"( 0.1650000 *( 1516320.00 /100))"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			BuildingRCFlagValue = [Y]
+			EBBuildingBasePremium = [2501.9280000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FinalEBBuildingBasePrem = [${roundUp('2501.9280000',0)}]
+			PolicyDays = ${dateDiff('09/30/2027','09/30/2026')}
+			EffectivePolicyDays = ${dateDiff('09/30/2027','09/30/2026')}
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FinalEBBuildingBasePrem = [2502.0000000]
+			PolicyDays = 365.0000000
+			EffectivePolicyDays = 365.0000000
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			ProRataFac = ${365.0000000 / 365.0000000}
+			TBuildingAction = [<#if ( '0001' == '0001' ) > ${" E "} <#elseif ( '0001' == '0002' ) > ${"   "} <#elseif ( '0001' == '0003' ) > ${"   "} <#elseif ( '0001' == '0004' ) > ${"   "} <#else> ${"   "}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			ProRataFac = 1.0000000
+			TBuildingAction = [E]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			AddBuildingBCvgPrem = [<#if ( 'Y' == 'Y' && 'E' == 'N' ) > ${"( 3882.0000000 * 1.0000000 )"} <#else> ${"0"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			AddBuildingBCvgPrem = [0]
+
+		Decision Table Evaluation :: BuildingApplicableLiabilityCvgs = [N]
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			DeleteBuildingCvgPrem = [<#if ( 'Y' == 'Y' && 'Y' == 'Y' && 'Y' == 'Y' && 'N' == 'Y' ) > ${"0"} <#elseif ( 'Y' == 'Y' && 'E' == 'D' ) > ${"( 0.00 * 1.0000000 *(-1))"} <#else> ${"0"}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			DeleteBuildingCvgPrem = [0]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			48BuildingBCvgPrem = [<#if ( 'E' == 'D' ) > ${" 0 "} <#elseif ( 'E' == 'N' ) > ${" 0 "} <#else> ${"0"}</#if>]
+			T48BuildingICvgPrem = [${0 + 0}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			48BuildingBCvgPrem = [0]
+			T48BuildingICvgPrem = [0.0000000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			48BuildingICvgPrem = ${sumValue(0.0000000)}
+			33BuildingCvgPrem = [<#if ( 'Y' == 'N' && 0.00 != 0 ) > ${"( 0.00 * 1.0000000 *(-1))"} <#elseif ( 'Y' == 'Y' && 0.00 == 0 ) > ${"( 3882.0000000 * 1.0000000 )"} <#else> ${"0"}</#if>]
+			33ItemCvgPrem = <#if ( 'Y' == 'N' && 0.00 != 0 ) > ${"( 0.00 * 1.0000000 *(-1))"} <#elseif ( 'Y' == 'Y' && 0.00 == 0 ) > ${"( 3882.0000000 * 1.0000000 )"} <#else> ${"0"}</#if>
+			33BuildingCvgSI = [<#if ( 'Y' == 'N' && 0.00 != 0 ) > ${"( 0.00 *(-1))"} <#elseif ( 'Y' == 'Y' && 0.00 == 0 ) > ${" 1516320.0000000 "} <#else> ${"0"}</#if>]
+			SBuildICvg = ${sumValue(1516320.00)}
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			48BuildingICvgPrem = 0
+			33BuildingCvgPrem = [3882.0000000]
+			33ItemCvgPrem = 3882.0000000
+			33BuildingCvgSI = [1516320.0000000]
+			SBuildICvg = 1516320.0000000
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			33ItemCvgSI = <#if ( 'Y' == 'N' && 0.00 != 0 ) > ${"( 0.00 *(-1))"} <#elseif ( 'Y' == 'Y' && 0.00 == 0 ) > ${" 1516320.0000000 "} <#else> ${"0"}</#if>
+			FinalBCvgPrem = [<#if ( ( 1516320.00 != 0 ) && ( '12' == '01' ) && ( 'Y' == 'Y' ) ) > ${"(( 3882.0000000 - 0.00 )* 1.0000000 )"} <#elseif ( ( 1516320.00 == 0 ) && ( '12' == '01' ) && ( 'Y' == 'Y' ) ) > ${"0"} <#elseif ( ( '12' == '01' ) && ( 'Y' == 'Y' ) ) > ${"0"} <#elseif ( '12' == '48' ) > ${" 0 "} <#elseif ( '12' == '33' ) > ${" 3882.0000000 "} <#elseif ( ( '12' == '06' ) && ( '00001' != '00001' ) && ( 'Y' == 'Y' ) ) > ${" 3882.0000000 "} <#else> ${" 3882.0000000 "}</#if>]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			33ItemCvgSI = 1516320.0000000
+			FinalBCvgPrem = [3882.0000000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			SBCvgPrem = ${sumValue(3882.0000000)}
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			SBCvgPrem = 3882.0000000
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FinalICvgPrem = [<#if ( ( 1516320.0000000 != 0 ) && ( '12' == '01' ) && ( 'Y' == 'Y' ) ) > ${"(( 3882.0000000 - 0.00 )* 1.0000000 )"} <#elseif ( ( 1516320.0000000 == 0 ) && ( '12' == '01' ) && ( 'Y' == 'Y' ) ) > ${"0"} <#elseif ( ( '12' == '01' ) && ( 'Y' == 'N' ) ) > ${"0"} <#elseif ( '12' == '48' ) > ${" 3882.0000000 "} <#elseif ( '12' == '33' ) > ${" 3882.0000000 "} <#elseif ( ( '12' == '06' ) && ( '00001' != '00001' ) && ( 'Y' == 'Y' ) ) > ${" 3882.0000000 "} <#else> ${" 3882.0000000 "}</#if>]
+			FinalBCvgSI = [<#if ( ( 1516320.00 != 0 ) && ( '12' == '01' ) ) > ${"( 1516320.00 - 0.00 )"} <#elseif ( ( 1516320.00 == 0 ) && ( '12' == '01' ) ) > ${"0"} <#elseif ( '12' == '48' ) > ${" 1516320.00 "} <#elseif ( '12' == '33' ) > ${" 1516320.0000000 "} <#else> ${" 1516320.00 "}</#if>]
+			FinalICvgSI = <#if ( ( 1516320.0000000 != 0 ) && ( '12' == '01' ) ) > ${"( 1516320.0000000 - 0.00 )"} <#elseif ( ( 1516320.0000000 == 0 ) && ( '12' == '01' ) ) > ${"0"} <#elseif ( '12' == '48' ) > ${" 1516320.0000000 "} <#elseif ( '12' == '33' ) > ${" 1516320.0000000 "} <#else> ${" 1516320.0000000 "}</#if>
+			FinBCvgPrem = [${roundOf('3882.0000000',0)}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FinalICvgPrem = [3882.0000000]
+			FinalBCvgSI = [1516320.00]
+			FinalICvgSI = 1516320.0000000
+			FinBCvgPrem = [3882.0000000]
+
+
+
+		The Values for formula and decision Table are Subsituted as :: 
+
+			FinICvgPrem = [${roundOf('3882.0000000',0)}]
+
+		The Values for formula and decision Table after Evaluation are :: 
+
+
+			FinICvgPrem = [3882.0000000]
+
+
+	RULESET - OUTPUT VARIABLE AND VALUES ARE
+
+
+		BuildingCoverBaseRate =  0.1650000,
+		BuildingCoverIncrementalPrem =  3882.0000000,
+		CoverageIncrementalPremium =  3882.0000000,
+		BuildingCoverUserRate =  0.2560000,
+		BuildingCoverSystemRate =  -0.1800000,
+		BuildingCoverLCM =  1.890,
+		CoverageRecalcFlag =  Y,
+		BuildingCoverRecalcFlag =  Y,
+		BCBasePremium =  2502.0000000,
+		BuildingCoverIncrementalSI =  1516320.00,
+		CoverageIncrementalSI =  1516320.0000000,
+		BuildingCoverAnnPrem =  3882.0000000,
+		CoverageNewPremium =  3882.0000000,
+
+
+
