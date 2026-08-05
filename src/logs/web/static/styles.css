@@ -169,6 +169,10 @@ body {
   grid-column: 1 / -1;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .field span {
   font-size: 0.82rem;
   font-weight: 600;
