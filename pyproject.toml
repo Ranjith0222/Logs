@@ -1,21 +1,26 @@
 [project]
 name = "logs"
-version = "0.2.0"
-description = "Log scraping, filtering, and extract builder CLI"
+version = "0.5.0"
+description = "Log scraping, ruleset extraction, and extract builder CLI/GUI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "requests>=2.32.3,<3",
+    "fastapi>=0.115.0,<1",
+    "uvicorn[standard]>=0.34.0,<1",
+    "python-multipart>=0.0.20,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3.4,<9",
     "ruff>=0.9.2,<1",
+    "httpx>=0.28.0,<1",
 ]
 
 [project.scripts]
 logs = "logs.cli:main"
+logs-gui = "logs.web.server:main"
 
 [build-system]
 requires = ["setuptools>=75.8.0"]
@@ -23,6 +28,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+logs = ["web/static/*", "web/templates/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

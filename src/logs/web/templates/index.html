@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LOGS Extract</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+    <main class="shell">
+      <header class="hero">
+        <p class="brand">LOGS</p>
+        <h1>Extract Building rating factors from UW ruleset runs.</h1>
+        <p class="lede">
+          Drop an ItemRating execution log, pick the Building ruleset, and pull
+          LCM, IRPM, relativity, and deductible factors into one clean table.
+        </p>
+      </header>
+
+      <section class="workspace" aria-label="Extract workspace">
+        <form id="extract-form" class="panel">
+          <label class="dropzone" id="dropzone" for="file-input">
+            <input id="file-input" name="file" type="file" accept=".log,.txt,text/plain" required />
+            <span class="dropzone-title">Drop the ruleset log here</span>
+            <span class="dropzone-hint" id="file-label">or click to choose a .log file</span>
+          </label>
+
+          <div class="controls">
+            <label class="field">
+              <span>Ruleset</span>
+              <input id="ruleset" name="ruleset" type="text" value="Building" />
+            </label>
+            <label class="field">
+              <span>Mode</span>
+              <select id="mode" name="mode">
+                <option value="building-factors" selected>Building factors</option>
+                <option value="fields">Custom fields</option>
+                <option value="full">Full ruleset</option>
+              </select>
+            </label>
+            <label class="field field-wide" id="fields-wrap" hidden>
+              <span>Fields (comma-separated)</span>
+              <input
+                id="fields"
+                name="fields"
+                type="text"
+                placeholder="LCMFactor,IRPMFactor,PPCFac"
+              />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="extract-btn">Extract</button>
+            <button type="button" id="reset-btn" class="ghost">Clear</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+        </form>
+
+        <section class="results" id="results" hidden>
+          <div class="results-head">
+            <div>
+              <h2 id="results-title">Extracted factors</h2>
+              <p class="meta" id="results-meta"></p>
+            </div>
+            <button type="button" id="copy-btn" class="ghost">Copy JSON</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Factor</th>
+                  <th>Value</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
