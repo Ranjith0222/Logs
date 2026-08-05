@@ -1,7 +1,7 @@
 # Logs
 
-A small Python CLI for scraping structured logs and extracting UW ruleset execution
-data from local paths or URLs.
+A small Python CLI and GUI for scraping structured logs and extracting UW ruleset
+execution data from local paths or URLs.
 
 ## Requirements
 
@@ -15,15 +15,22 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-## Development
+## GUI
+
+Launch the extract builder UI:
 
 ```bash
-# Lint
-ruff check .
+logs gui
+# or
+logs-gui --host 0.0.0.0 --port 8000
+```
 
-# Test
-pytest
+Open http://127.0.0.1:8000, drop a UW ItemRating `.log` file, keep ruleset
+`Building`, and extract the rating factors.
 
+## CLI
+
+```bash
 # Line-log extract
 logs samples/app.log --level ERROR
 
@@ -31,13 +38,14 @@ logs samples/app.log --level ERROR
 logs samples/uw_item_rating_building.log --ruleset Building --building-factors
 ```
 
-## Usage
+## Development
 
 ```bash
-logs <path-or-url> [options]
+ruff check .
+pytest
 ```
 
-### Options
+## Options
 
 | Flag | Description |
 |------|-------------|
@@ -53,38 +61,6 @@ logs <path-or-url> [options]
 | `--format {raw,json,csv}` | Output format (default: `json` with `--ruleset`, else `raw`) |
 | `-o` / `--output PATH` | Write the extract to a file |
 | `--quiet` | Suppress the match-count line on stderr |
-
-### Examples
-
-```bash
-# Errors only
-logs samples/app.log --level ERROR
-
-# Extract the Building ruleset (inputs, evaluations, outputs)
-logs samples/uw_item_rating_building.log --ruleset Building
-
-# Extract specific Building rating factors
-logs samples/uw_item_rating_building.log --ruleset Building --building-factors
-
-# Same factors via explicit field list
-logs samples/uw_item_rating_building.log --ruleset Building \
-  --fields LCMFactor,IRPMFactor,PropertyRateNumbers,OccRelativityFactor,BuiConstructionRelativitiesFactor,BuildingRelativityFactor,PPCFac,BCEGFac,SprinkledFactor,400513BCvgFactor,FixedDedFactor,BaseLCfac
-```
-
-## Extract builder (library)
-
-```python
-from logs import ExtractBuilder
-
-text = (
-    ExtractBuilder()
-    .from_source("samples/uw_item_rating_building.log")
-    .ruleset("Building")
-    .building_factors()
-    .as_json()
-    .extract()
-)
-```
 
 `--building-factors` selects:
 

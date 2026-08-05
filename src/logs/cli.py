@@ -86,7 +86,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    argv_list = list(sys.argv[1:] if argv is None else argv)
+    if argv_list and argv_list[0] == "gui":
+        from logs.web.server import main as gui_main
+
+        return gui_main(argv_list[1:])
+
+    args = build_parser().parse_args(argv_list)
     try:
         field_names = _parse_fields(args.fields)
     except ValueError as exc:
