@@ -1,0 +1,6 @@
+2026-08-05 10:00:00 INFO Server started on port 8080
+2026-08-05 10:00:01 INFO Connected to database
+2026-08-05 10:00:02 WARN Retrying connection to cache
+2026-08-05 10:00:03 ERROR Disk full on /var/log
+2026-08-05 10:00:04 ERROR Failed to rotate logs
+2026-08-05 10:00:05 INFO Health check passed
