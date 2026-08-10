@@ -19,6 +19,44 @@ def _parse_fields(raw: str | None) -> list[str] | None:
     return names
 
 
+def _excel_main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="logs excel",
+        description=(
+            "Build a Policywise-style Excel workbook from a UW ruleset log "
+            "(Building=U, Business Personal Property=V, Liability=W)."
+        ),
+    )
+    parser.add_argument("source", help="Path to a UW ruleset .log file")
+    parser.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="Output .xlsx path (e.g. PMBP001029427Z01.xlsx)",
+    )
+    parser.add_argument("--ruleset", default="Building", help="Ruleset name (default: Building)")
+    parser.add_argument(
+        "--template",
+        required=True,
+        help="Class-code / Policywise Excel template (.xlsx) to fill",
+    )
+    args = parser.parse_args(argv)
+    try:
+        from logs.excel_export import build_excel_from_log
+
+        dest = build_excel_from_log(
+            args.source,
+            args.output,
+            ruleset=args.ruleset,
+            template=args.template,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(str(exc), file=sys.stderr)
+        return 1
+    print(f"Wrote {dest}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Build and run log extracts from local paths or URLs.",
@@ -91,6 +129,8 @@ def main(argv: list[str] | None = None) -> int:
         from logs.desktop.app import main as desktop_main
 
         return desktop_main(argv_list[1:])
+    if argv_list and argv_list[0] == "excel":
+        return _excel_main(argv_list[1:])
     if argv_list and argv_list[0] == "gui":
         from logs.web.server import main as gui_main
 
