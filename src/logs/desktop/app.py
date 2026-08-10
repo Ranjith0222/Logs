@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 try:
     import tkinter as tk
@@ -13,37 +12,31 @@ except ModuleNotFoundError as exc:  # pragma: no cover - environment dependent
         "On Linux, install python3-tk."
     ) from exc
 
-from logs.desktop.service import (
-    MODES,
-    default_export_stem,
-    export_csv_text,
-    export_json_text,
-    rows_from_payload,
-    run_desktop_extract,
-)
-from logs.ruleset import BUILDING_RATING_FACTORS
+from logs.desktop.service import rows_from_payload, run_desktop_extract
+from logs.excel_export import build_excel_from_log, collect_all_section_values
+from logs.sections import RATING_SECTION_NAMES
 
 
 class LogsExtractApp(tk.Tk):
-    """Native desktop GUI for Building ruleset factor extraction."""
+    """Desktop app: upload full log + Excel template → filled Excel output."""
 
     def __init__(self) -> None:
         super().__init__()
         self.title("LOGS Extract")
-        self.geometry("920x640")
-        self.minsize(760, 520)
+        self.geometry("980x680")
+        self.minsize(820, 560)
         self.configure(bg="#f3f7f4")
 
         self._log_path = tk.StringVar(value="")
-        self._ruleset = tk.StringVar(value="Building")
-        self._mode = tk.StringVar(value="building-factors")
-        self._fields = tk.StringVar(value=",".join(BUILDING_RATING_FACTORS[:3]))
-        self._status = tk.StringVar(value="Choose a UW ruleset .log file to begin.")
-        self._payload: dict[str, Any] | None = None
+        self._template_path = tk.StringVar(value="")
+        self._status = tk.StringVar(
+            value="1) Upload the full UW .log   2) Upload the class-code Excel template   "
+            "3) Generate Excel"
+        )
+        self._section_rows: list[dict[str, str]] = []
 
         self._build_style()
         self._build_layout()
-        self._sync_fields_visibility()
 
     def _build_style(self) -> None:
         style = ttk.Style(self)
@@ -66,56 +59,51 @@ class LogsExtractApp(tk.Tk):
         ttk.Label(root, text="LOGS", style="Brand.TLabel").pack(anchor=tk.W)
         ttk.Label(
             root,
-            text="Extract Building rating factors from UW ruleset runs.",
+            text="Upload log + class-code Excel template → get filled Excel output.",
             style="Title.TLabel",
         ).pack(anchor=tk.W, pady=(4, 2))
         ttk.Label(
             root,
-            text="Native desktop app (no browser). Open a .log, extract, then save JSON/CSV.",
+            text=(
+                "Extracts Building (U), Business Personal Property (V), and Liability (W) "
+                "from the full ruleset log into your template."
+            ),
             style="Body.TLabel",
         ).pack(anchor=tk.W, pady=(0, 14))
 
-        form = ttk.LabelFrame(root, text="Extract", padding=12)
+        form = ttk.LabelFrame(root, text="Inputs", padding=12)
         form.pack(fill=tk.X)
 
-        file_row = ttk.Frame(form)
-        file_row.pack(fill=tk.X, pady=(0, 8))
-        ttk.Entry(file_row, textvariable=self._log_path).pack(
+        log_row = ttk.Frame(form)
+        log_row.pack(fill=tk.X, pady=(0, 8))
+        ttk.Label(log_row, text="1. Full UW log file", width=22).pack(side=tk.LEFT)
+        ttk.Entry(log_row, textvariable=self._log_path).pack(
             side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8)
         )
-        ttk.Button(file_row, text="Browse…", command=self._browse).pack(side=tk.LEFT)
+        ttk.Button(log_row, text="Browse log…", command=self._browse_log).pack(side=tk.LEFT)
 
-        opts = ttk.Frame(form)
-        opts.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(opts, text="Ruleset").grid(row=0, column=0, sticky=tk.W)
-        ttk.Entry(opts, textvariable=self._ruleset, width=24).grid(
-            row=1, column=0, sticky=tk.W, padx=(0, 12)
+        tpl_row = ttk.Frame(form)
+        tpl_row.pack(fill=tk.X, pady=(0, 8))
+        ttk.Label(tpl_row, text="2. Class-code Excel", width=22).pack(side=tk.LEFT)
+        ttk.Entry(tpl_row, textvariable=self._template_path).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8)
         )
-        ttk.Label(opts, text="Mode").grid(row=0, column=1, sticky=tk.W)
-        mode = ttk.Combobox(
-            opts,
-            textvariable=self._mode,
-            values=list(MODES),
-            state="readonly",
-            width=22,
+        ttk.Button(tpl_row, text="Browse Excel…", command=self._browse_template).pack(
+            side=tk.LEFT
         )
-        mode.grid(row=1, column=1, sticky=tk.W)
-        mode.bind("<<ComboboxSelected>>", lambda _event: self._sync_fields_visibility())
-
-        self._fields_frame = ttk.Frame(form)
-        self._fields_frame.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(self._fields_frame, text="Fields (comma-separated)").pack(anchor=tk.W)
-        ttk.Entry(self._fields_frame, textvariable=self._fields).pack(fill=tk.X)
 
         actions = ttk.Frame(form)
-        actions.pack(fill=tk.X)
+        actions.pack(fill=tk.X, pady=(4, 0))
         ttk.Button(
-            actions, text="Extract", style="Accent.TButton", command=self._extract
+            actions,
+            text="3. Generate Excel",
+            style="Accent.TButton",
+            command=self._generate_excel,
         ).pack(side=tk.LEFT)
-        ttk.Button(actions, text="Clear", command=self._clear).pack(side=tk.LEFT, padx=8)
-        ttk.Button(actions, text="Save JSON", command=self._save_json).pack(side=tk.LEFT)
-        ttk.Button(actions, text="Save CSV", command=self._save_csv).pack(side=tk.LEFT, padx=8)
-        ttk.Button(actions, text="Save Excel", command=self._save_excel).pack(side=tk.LEFT)
+        ttk.Button(actions, text="Preview factors", command=self._preview_factors).pack(
+            side=tk.LEFT, padx=8
+        )
+        ttk.Button(actions, text="Clear", command=self._clear).pack(side=tk.LEFT)
 
         ttk.Label(root, textvariable=self._status, style="Status.TLabel").pack(
             anchor=tk.W, pady=(10, 6)
@@ -123,154 +111,169 @@ class LogsExtractApp(tk.Tk):
 
         table_frame = ttk.Frame(root)
         table_frame.pack(fill=tk.BOTH, expand=True)
-        columns = ("name", "value", "source")
+        columns = ("section", "factor", "value")
         self._tree = ttk.Treeview(table_frame, columns=columns, show="headings")
-        self._tree.heading("name", text="Factor")
+        self._tree.heading("section", text="Section")
+        self._tree.heading("factor", text="Factor")
         self._tree.heading("value", text="Value")
-        self._tree.heading("source", text="Source")
-        self._tree.column("name", width=280, anchor=tk.W)
-        self._tree.column("value", width=180, anchor=tk.W)
-        self._tree.column("source", width=140, anchor=tk.W)
+        self._tree.column("section", width=220, anchor=tk.W)
+        self._tree.column("factor", width=220, anchor=tk.W)
+        self._tree.column("value", width=160, anchor=tk.W)
         scroll = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=scroll.set)
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
-    def _sync_fields_visibility(self) -> None:
-        if self._mode.get() == "fields":
-            self._fields_frame.pack(fill=tk.X, pady=(0, 8))
-        else:
-            self._fields_frame.pack_forget()
-
-    def _browse(self) -> None:
+    def _browse_log(self) -> None:
         path = filedialog.askopenfilename(
-            title="Select UW ruleset log",
+            title="Select full UW ruleset log",
             filetypes=[("Log files", "*.log *.txt"), ("All files", "*.*")],
         )
         if path:
             self._log_path.set(path)
 
+    def _browse_template(self) -> None:
+        path = filedialog.askopenfilename(
+            title="Select class-code Excel template",
+            filetypes=[("Excel files", "*.xlsx *.xlsm"), ("All files", "*.*")],
+        )
+        if path:
+            self._template_path.set(path)
+
     def _clear(self) -> None:
         self._log_path.set("")
-        self._ruleset.set("Building")
-        self._mode.set("building-factors")
-        self._fields.set(",".join(BUILDING_RATING_FACTORS[:3]))
-        self._payload = None
+        self._template_path.set("")
+        self._section_rows = []
         self._tree.delete(*self._tree.get_children())
-        self._status.set("Choose a UW ruleset .log file to begin.")
-        self._sync_fields_visibility()
+        self._status.set(
+            "1) Upload the full UW .log   2) Upload the class-code Excel template   "
+            "3) Generate Excel"
+        )
 
-    def _extract(self) -> None:
+    def _require_log(self) -> str | None:
         path = self._log_path.get().strip()
         if not path:
-            messagebox.showwarning("LOGS Extract", "Choose a log file first.")
+            messagebox.showwarning("LOGS Extract", "Choose the full UW .log file first.")
+            return None
+        if not Path(path).exists():
+            messagebox.showerror("LOGS Extract", f"Log file not found:\n{path}")
+            return None
+        return path
+
+    def _require_template(self) -> str | None:
+        path = self._template_path.get().strip()
+        if not path:
+            messagebox.showwarning(
+                "LOGS Extract",
+                "Choose the class-code Excel template (.xlsx) to fill.",
+            )
+            return None
+        if not Path(path).exists():
+            messagebox.showerror("LOGS Extract", f"Excel template not found:\n{path}")
+            return None
+        return path
+
+    def _preview_factors(self) -> None:
+        log_path = self._require_log()
+        if not log_path:
             return
         try:
-            payload = run_desktop_extract(
-                path,
-                ruleset=self._ruleset.get(),
-                mode=self._mode.get(),
-                fields=self._fields.get(),
-            )
-        except Exception as exc:  # noqa: BLE001 - show in UI
-            self._payload = None
-            self._tree.delete(*self._tree.get_children())
-            self._status.set(str(exc))
+            sections = collect_all_section_values(log_path)
+        except Exception as exc:  # noqa: BLE001
             messagebox.showerror("LOGS Extract", str(exc))
+            self._status.set(str(exc))
             return
 
-        self._payload = payload
+        self._section_rows = []
         self._tree.delete(*self._tree.get_children())
-        rows = rows_from_payload(payload)
-        for row in rows:
-            self._tree.insert("", tk.END, values=(row["name"], row["value"], row["source"]))
-
-        ruleset = payload["rulesets"][0]
-        header = payload.get("header") or {}
-        self._status.set(
-            " · ".join(
-                part
-                for part in (
-                    f"Extracted {len(rows)} values",
-                    payload.get("filename"),
-                    header.get("policy_no"),
-                    f"precondition {ruleset.get('precondition', {}).get('status')}",
+        count = 0
+        for section_name in RATING_SECTION_NAMES:
+            values = sections.get(section_name) or {}
+            for factor, value in values.items():
+                if value is None or str(value).strip() == "":
+                    continue
+                row = {
+                    "section": section_name,
+                    "factor": factor,
+                    "value": str(value),
+                }
+                self._section_rows.append(row)
+                self._tree.insert(
+                    "",
+                    tk.END,
+                    values=(row["section"], row["factor"], row["value"]),
                 )
-                if part
-            )
+                count += 1
+
+        # Also show a quick Building factor preview using standard extract if empty.
+        if count == 0:
+            payload = run_desktop_extract(log_path, ruleset="Building", mode="building-factors")
+            for row in rows_from_payload(payload):
+                self._tree.insert(
+                    "",
+                    tk.END,
+                    values=("Building", row["name"], row["value"]),
+                )
+                count += 1
+
+        self._status.set(
+            f"Previewed {count} factors from "
+            + ", ".join(RATING_SECTION_NAMES)
+            + ". Click Generate Excel to write the template."
         )
 
-    def _require_payload(self) -> dict[str, Any] | None:
-        if not self._payload:
-            messagebox.showwarning("LOGS Extract", "Extract a log first.")
-            return None
-        return self._payload
-
-    def _save_json(self) -> None:
-        payload = self._require_payload()
-        if not payload:
-            return
-        path = filedialog.asksaveasfilename(
-            title="Save JSON",
-            defaultextension=".json",
-            initialfile=f"{default_export_stem(payload)}.json",
-            filetypes=[("JSON", "*.json")],
-        )
-        if not path:
-            return
-        Path(path).write_text(export_json_text(payload), encoding="utf-8")
-        self._status.set(f"Saved JSON → {path}")
-
-    def _save_csv(self) -> None:
-        payload = self._require_payload()
-        if not payload:
-            return
-        path = filedialog.asksaveasfilename(
-            title="Save CSV",
-            defaultextension=".csv",
-            initialfile=f"{default_export_stem(payload)}.csv",
-            filetypes=[("CSV", "*.csv")],
-        )
-        if not path:
-            return
-        Path(path).write_text(export_csv_text(payload), encoding="utf-8")
-        self._status.set(f"Saved CSV → {path}")
-
-    def _save_excel(self) -> None:
-        log_path = self._log_path.get().strip()
+    def _generate_excel(self) -> None:
+        log_path = self._require_log()
         if not log_path:
-            messagebox.showwarning("LOGS Extract", "Choose a log file first.")
             return
-        payload = self._require_payload()
-        if not payload:
+        template_path = self._require_template()
+        if not template_path:
             return
-        header = payload.get("header") or {}
-        default_name = f"{header.get('policy_no') or default_export_stem(payload)}.xlsx"
-        path = filedialog.asksaveasfilename(
-            title="Save Excel (Policywise format)",
+
+        # Refresh preview while generating.
+        try:
+            self._preview_factors()
+        except Exception:  # noqa: BLE001
+            pass
+
+        default_name = f"{Path(log_path).stem}.xlsx"
+        # Prefer policy-looking token from filename if present.
+        stem = Path(log_path).name
+        if "PMBP" in stem.upper():
+            default_name = stem.split("_")[0] + ".xlsx"
+
+        out_path = filedialog.asksaveasfilename(
+            title="Save filled Excel output",
             defaultextension=".xlsx",
             initialfile=default_name,
             filetypes=[("Excel", "*.xlsx")],
         )
-        if not path:
+        if not out_path:
             return
-        try:
-            from logs.excel_export import build_excel_from_log
 
-            build_excel_from_log(
+        try:
+            dest = build_excel_from_log(
                 log_path,
-                path,
-                ruleset=self._ruleset.get() or "Building",
+                out_path,
+                template=template_path,
             )
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("LOGS Extract", str(exc))
             self._status.set(str(exc))
             return
-        self._status.set(f"Saved Excel → {path}")
+
+        self._status.set(f"Saved filled Excel → {dest}")
+        messagebox.showinfo(
+            "LOGS Extract",
+            "Excel generated successfully.\n\n"
+            f"Log: {Path(log_path).name}\n"
+            f"Template: {Path(template_path).name}\n"
+            f"Output: {dest}",
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
-    _ = argv  # reserved for future CLI flags
+    _ = argv
     app = LogsExtractApp()
     app.mainloop()
     return 0

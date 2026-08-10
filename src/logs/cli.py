@@ -37,7 +37,8 @@ def _excel_main(argv: list[str]) -> int:
     parser.add_argument("--ruleset", default="Building", help="Ruleset name (default: Building)")
     parser.add_argument(
         "--template",
-        help="Optional path to policy_rating_template.xlsx",
+        required=True,
+        help="Class-code / Policywise Excel template (.xlsx) to fill",
     )
     args = parser.parse_args(argv)
     try:

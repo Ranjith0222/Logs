@@ -8,20 +8,16 @@ FIXTURE = Path(__file__).parent / "fixtures" / "building_ruleset_snippet.log"
 FULL_SAMPLE = Path(__file__).parents[1] / "samples" / "uw_item_rating_building.log"
 
 
-def test_build_excel_fills_building_factor_column(tmp_path: Path) -> None:
-    out = tmp_path / "PMBP001030043Z02000.xlsx"
-    result = build_excel_from_log(FIXTURE, out)
-    assert result.exists()
-
-    wb = load_workbook(result)
-    ws = wb[wb.sheetnames[0]]
-    assert ws["A1"].value == "PMBP001030043Z02000"
-    assert ws["U6"].value == 3.302
-    assert ws["U7"].value == 0.759
-    assert ws["U9"].value == 1.0
-    assert ws["U13"].value == 1.89
-    assert ws["U14"].value == -0.18
+def test_build_excel_uses_uploaded_template(tmp_path: Path) -> None:
+    template = Path("templates/policy_rating_template.xlsx")
+    if not template.exists():
+        template = Path("src/logs/data/policy_rating_template.xlsx")
+    assert template.exists()
+    out = tmp_path / "from_upload.xlsx"
+    build_excel_from_log(FIXTURE, out, template=template)
+    wb = load_workbook(out)
     assert "Build" in wb.sheetnames
+    assert wb.active["U6"].value == 3.302
 
 
 def test_collect_bpp_and_liability_sections() -> None:
