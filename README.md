@@ -1,69 +1,71 @@
 # Logs
 
-A small Python CLI and GUI for scraping structured logs and extracting UW ruleset
-execution data from local paths or URLs.
+Native **desktop** app (and CLI) for extracting UW ruleset / Building rating factors
+from ItemRating execution logs. Package it as a Windows `.exe` — no browser required.
 
 ## Requirements
 
-- Python 3.12+
+- Python 3.12+ (Windows: install from [python.org](https://www.python.org/downloads/) so Tcl/Tk is included)
 
-## Setup
+## Run the desktop app (local)
 
 ```bash
-python3 -m venv .venv
+git clone https://github.com/Ranjith0222/Logs.git
+cd Logs
+
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
 source .venv/bin/activate
+
 pip install -e ".[dev]"
+logs desktop
+# or:
+logs-desktop
 ```
 
-## GUI
+1. Click **Browse…** and select your UW `.log`  
+2. Keep ruleset `Building` and mode `building-factors`  
+3. Click **Extract**  
+4. Use **Save JSON** / **Save CSV**
 
-Launch the extract builder UI:
+## Build Windows EXE
 
-```bash
-logs gui
-# or
-logs-gui --host 0.0.0.0 --port 8000
+### On a Windows PC
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e .
+pip install "pyinstaller>=6.11.0,<7"
+powershell -ExecutionPolicy Bypass -File scripts\build_windows_exe.ps1
 ```
 
-Open http://127.0.0.1:8000, drop a UW ItemRating `.log` file, keep ruleset
-`Building`, and extract the rating factors.
+Output: `dist\LogsExtract.exe` — double-click to open the desktop app.
 
-## CLI
+### Via GitHub Actions
+
+Push to `main` (or run **Build Windows EXE** manually). Download the
+`LogsExtract-windows` artifact from the workflow run.
+
+## CLI (optional)
 
 ```bash
-# Line-log extract
-logs samples/app.log --level ERROR
-
-# Building rating factors from the UW sample
 logs samples/uw_item_rating_building.log --ruleset Building --building-factors
 ```
 
-## Development
-
-```bash
-ruff check .
-pytest
-```
-
-## Options
-
-| Flag | Description |
-|------|-------------|
-| `--level LEVEL` | Keep only this log level (`ERROR`, `WARN`, `INFO`, …) |
-| `--contains TEXT` | Keep messages containing this text (case-insensitive) |
-| `--regex PATTERN` | Keep messages matching this regular expression |
-| `--since TIMESTAMP` | Keep entries at or after this timestamp |
-| `--until TIMESTAMP` | Keep entries at or before this timestamp |
-| `--ruleset NAME` | Extract a UW ruleset execution by name (e.g. `Building`) |
-| `--satisfied-only` | Keep only rulesets whose precondition was satisfied |
-| `--fields A,B,C` | Extract only these ruleset field names |
-| `--building-factors` | Shortcut for the standard Building rating factor set |
-| `--format {raw,json,csv}` | Output format (default: `json` with `--ruleset`, else `raw`) |
-| `-o` / `--output PATH` | Write the extract to a file |
-| `--quiet` | Suppress the match-count line on stderr |
-
-`--building-factors` selects:
+## Building factors extracted
 
 `LCMFactor`, `IRPMFactor`, `PropertyRateNumbers`, `OccRelativityFactor`,
 `BuiConstructionRelativitiesFactor`, `BuildingRelativityFactor`, `PPCFac`,
 `BCEGFac`, `SprinkledFactor`, `400513BCvgFactor`, `FixedDedFactor`, `BaseLCfac`
+
+## Optional web UI
+
+The older browser UI is still available if you want it:
+
+```bash
+pip install -e ".[web]"
+logs gui --host 127.0.0.1 --port 8000
+```

@@ -1,0 +1,43 @@
+# Build LogsExtract.exe on Windows (GitHub Actions).
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/logs/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - ".github/workflows/build-windows-exe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package and PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install "pyinstaller>=6.11.0,<7"
+
+      - name: Build LogsExtract.exe
+        run: pyinstaller packaging/LogsExtract.spec --noconfirm --clean
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogsExtract-windows
+          path: dist/LogsExtract.exe
+          if-no-files-found: error

@@ -1,6 +1,6 @@
-"""Log scraping, filtering, extract builder, and GUI utilities."""
+"""Log scraping, desktop extract app, and optional web GUI."""
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 from logs.extract import ExtractBuilder, ExtractSpec, format_extract, format_ruleset_extract
 from logs.ruleset import BUILDING_RATING_FACTORS, RulesetLogExtract, extract_rulesets
