@@ -264,6 +264,13 @@ button.ghost:hover {
   margin-bottom: 1rem;
 }
 
+.results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
 .results h2 {
   margin: 0;
   font-family: var(--font-display);
