@@ -12,7 +12,10 @@ a = Analysis(
     ['../src/logs/desktop/app.py'],
     pathex=['../src'],
     binaries=[],
-    datas=[],
+    datas=[
+        ('../src/logs/data/policy_rating_template.xlsx', 'logs/data'),
+        ('../templates/policy_rating_template.xlsx', 'templates'),
+    ],
     hiddenimports=[
         'logs',
         'logs.desktop',

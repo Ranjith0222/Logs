@@ -115,6 +115,7 @@ class LogsExtractApp(tk.Tk):
         ttk.Button(actions, text="Clear", command=self._clear).pack(side=tk.LEFT, padx=8)
         ttk.Button(actions, text="Save JSON", command=self._save_json).pack(side=tk.LEFT)
         ttk.Button(actions, text="Save CSV", command=self._save_csv).pack(side=tk.LEFT, padx=8)
+        ttk.Button(actions, text="Save Excel", command=self._save_excel).pack(side=tk.LEFT)
 
         ttk.Label(root, textvariable=self._status, style="Status.TLabel").pack(
             anchor=tk.W, pady=(10, 6)
@@ -234,6 +235,38 @@ class LogsExtractApp(tk.Tk):
             return
         Path(path).write_text(export_csv_text(payload), encoding="utf-8")
         self._status.set(f"Saved CSV → {path}")
+
+    def _save_excel(self) -> None:
+        log_path = self._log_path.get().strip()
+        if not log_path:
+            messagebox.showwarning("LOGS Extract", "Choose a log file first.")
+            return
+        payload = self._require_payload()
+        if not payload:
+            return
+        header = payload.get("header") or {}
+        default_name = f"{header.get('policy_no') or default_export_stem(payload)}.xlsx"
+        path = filedialog.asksaveasfilename(
+            title="Save Excel (Policywise format)",
+            defaultextension=".xlsx",
+            initialfile=default_name,
+            filetypes=[("Excel", "*.xlsx")],
+        )
+        if not path:
+            return
+        try:
+            from logs.excel_export import build_excel_from_log
+
+            build_excel_from_log(
+                log_path,
+                path,
+                ruleset=self._ruleset.get() or "Building",
+            )
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("LOGS Extract", str(exc))
+            self._status.set(str(exc))
+            return
+        self._status.set(f"Saved Excel → {path}")
 
 
 def main(argv: list[str] | None = None) -> int:

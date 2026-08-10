@@ -1,11 +1,12 @@
 [project]
 name = "logs"
-version = "0.6.0"
-description = "Log scraping and native desktop extract app (Windows .exe supported)"
+version = "0.7.0"
+description = "Log extract desktop app with Policywise-style Excel export"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "requests>=2.32.3,<3",
+    "openpyxl>=3.1.0,<4",
 ]
 
 [project.optional-dependencies]
@@ -38,7 +39,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-logs = ["web/static/*", "web/templates/*"]
+logs = ["web/static/*", "web/templates/*", "data/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
