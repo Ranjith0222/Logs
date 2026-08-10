@@ -12,6 +12,8 @@ const resultsTitle = document.getElementById("results-title");
 const extractBtn = document.getElementById("extract-btn");
 const resetBtn = document.getElementById("reset-btn");
 const copyBtn = document.getElementById("copy-btn");
+const downloadJsonBtn = document.getElementById("download-json-btn");
+const downloadCsvBtn = document.getElementById("download-csv-btn");
 
 let lastPayload = null;
 
@@ -89,6 +91,67 @@ function escapeHtml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function exportData() {
+  const ruleset = lastPayload?.rulesets?.[0];
+  if (!ruleset) return null;
+  if (lastPayload.mode === "full") {
+    return ruleset;
+  }
+  return ruleset.fields || {};
+}
+
+function exportRows() {
+  const ruleset = lastPayload?.rulesets?.[0];
+  if (!ruleset) return [];
+  if (lastPayload.mode === "full") {
+    const rows = [];
+    for (const item of ruleset.inputs || []) {
+      rows.push({ name: item.name, value: item.value ?? "", source: "input" });
+    }
+    for (const item of ruleset.evaluations || []) {
+      rows.push({
+        name: item.name,
+        value: item.value ?? "",
+        source: `evaluation/${item.kind}`,
+      });
+    }
+    for (const item of ruleset.outputs || []) {
+      rows.push({ name: item.name, value: item.value ?? "", source: "output" });
+    }
+    return rows;
+  }
+  if (ruleset.field_details?.length) {
+    return ruleset.field_details.map((item) => ({
+      name: item.name,
+      value: item.value ?? "",
+      source: item.source ?? "",
+    }));
+  }
+  return Object.entries(ruleset.fields || {}).map(([name, value]) => ({
+    name,
+    value: value ?? "",
+    source: "",
+  }));
+}
+
+function downloadBlob(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function baseFilename() {
+  const stem = (lastPayload?.filename || "extract").replace(/\.[^.]+$/, "");
+  const ruleset = (lastPayload?.rulesets?.[0]?.name || "ruleset").replace(/\s+/g, "_");
+  return `${stem}_${ruleset}`;
 }
 
 function showResults(payload) {
@@ -171,14 +234,40 @@ function onReset() {
 }
 
 async function onCopy() {
-  if (!lastPayload) return;
-  const ruleset = lastPayload.rulesets?.[0];
-  const data =
-    lastPayload.mode === "full"
-      ? ruleset
-      : ruleset?.fields || {};
+  const data = exportData();
+  if (!data) return;
   await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
   setStatus("Copied JSON to clipboard.");
+}
+
+function onDownloadJson() {
+  const data = exportData();
+  if (!data) return;
+  downloadBlob(
+    `${baseFilename()}.json`,
+    `${JSON.stringify(data, null, 2)}\n`,
+    "application/json",
+  );
+  setStatus("Downloaded JSON.");
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  if (/[",\n]/.test(text)) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+  return text;
+}
+
+function onDownloadCsv() {
+  const rows = exportRows();
+  if (!rows.length) return;
+  const lines = ["name,value,source"];
+  for (const row of rows) {
+    lines.push(`${csvEscape(row.name)},${csvEscape(row.value)},${csvEscape(row.source)}`);
+  }
+  downloadBlob(`${baseFilename()}.csv`, `${lines.join("\n")}\n`, "text/csv");
+  setStatus("Downloaded CSV.");
 }
 
 ["dragenter", "dragover"].forEach((eventName) => {
@@ -209,6 +298,8 @@ modeSelect.addEventListener("change", syncMode);
 form.addEventListener("submit", onSubmit);
 resetBtn.addEventListener("click", onReset);
 copyBtn.addEventListener("click", onCopy);
+downloadJsonBtn.addEventListener("click", onDownloadJson);
+downloadCsvBtn.addEventListener("click", onDownloadCsv);
 
 syncMode();
 syncFileLabel();
