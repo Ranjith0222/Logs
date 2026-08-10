@@ -27,6 +27,20 @@ SECTION_COVERAGE_LABELS: dict[str, str] = {
     "400127": "Liability",
 }
 
+# weSure endorsement bundle coverage codes.
+BUNDLE_COVERAGE_CODES: frozenset[str] = frozenset(
+    {
+        "400502",
+        "400503",
+        "400504",
+        "400505",
+        "400506",
+        "400507",
+        "400508",
+        "400509",
+    }
+)
+
 # Liability occurrence limit (400127) resolution order from UW ruleset logic.
 LIABILITY_OCCURRENCE_LIMIT_FIELDS: tuple[str, ...] = (
     "FinalBuilding400127SI",
@@ -49,6 +63,23 @@ class CoverageRow:
     base_rate: str | None = None
     final_rate: str | None = None
     premium: str | None = None
+
+
+@dataclass(frozen=True)
+class RCFlagCoverage:
+    """One coverage entry from RULESET NAME :: RCFlagN parallel arrays."""
+
+    code: str
+    selected: bool
+    sum_insured: str | None = None
+    premium: str | None = None
+    chapter: str | None = None
+
+
+def is_bundle_coverage(code: str, label: str | None = None) -> bool:
+    if code in BUNDLE_COVERAGE_CODES:
+        return True
+    return bool(label and "bundle" in label.lower())
 
 
 def resolve_coverages_path(path: str | Path | None = None) -> Path | None:
@@ -132,10 +163,13 @@ def coverage_row_has_value(row: CoverageRow) -> bool:
 
     Drops rows where Sum Insured / Base / Final / Premium are all zero, and
     drops non-core coverages that only carry default SI/rates with $0 premium.
+    Selected endorsement bundles are always kept when they have a premium.
     """
     has_premium = is_nonzero_amount(row.premium)
     if has_premium:
         return True
+    if is_bundle_coverage(row.code, row.label):
+        return has_premium  # bundles only when they carry premium
     if row.code in SECTION_COVERAGE_CODES.values():
         return (
             is_nonzero_amount(row.sum_insured)
@@ -143,6 +177,59 @@ def coverage_row_has_value(row: CoverageRow) -> bool:
             or is_nonzero_amount(row.final_rate)
         )
     return False
+
+
+def extract_rcflag_coverages(log_path: str | Path) -> list[RCFlagCoverage] | None:
+    """Parse ``RULESET NAME :: RCFlagN`` selected-coverage flags.
+
+    Returns parallel ``CvgCode`` / ``CvgRCFlag`` (Y/N) / ``CvgSI`` / ``CvgPrem``
+    entries, or ``None`` when the ruleset is absent.
+    """
+    extract = extract_rulesets(str(log_path), ruleset_name="RCFlagN")
+    if not extract.rulesets:
+        return None
+
+    ruleset = extract.rulesets[0]
+    inputs, outputs, evaluations = _io_maps(ruleset)
+    codes = _parse_list_values(inputs.get("CvgCode") or outputs.get("CvgCode"))
+    flags = _parse_list_values(inputs.get("CvgRCFlag") or outputs.get("CvgRCFlag"))
+    sis = _parse_list_values(
+        inputs.get("CvgSI")
+        or evaluations.get("FinalSI")
+        or outputs.get("CoverageIncrementalSI")
+    )
+    prems = _parse_list_values(
+        inputs.get("CvgPrem")
+        or evaluations.get("FinalPrem")
+        or outputs.get("CoverageIncrementalPremium")
+    )
+    chapters = _parse_list_values(inputs.get("CvgChapter") or outputs.get("CvgChapter"))
+    if not codes or not flags or len(codes) != len(flags):
+        return None
+
+    rows: list[RCFlagCoverage] = []
+    for idx, code in enumerate(codes):
+        if not code.isdigit():
+            continue
+        flag = flags[idx].strip().upper()
+        rows.append(
+            RCFlagCoverage(
+                code=code,
+                selected=flag == "Y",
+                sum_insured=sis[idx] if idx < len(sis) else None,
+                premium=prems[idx] if idx < len(prems) else None,
+                chapter=chapters[idx] if idx < len(chapters) else None,
+            )
+        )
+    return rows
+
+
+def selected_coverage_codes(log_path: str | Path) -> set[str] | None:
+    """Return the set of coverage codes with ``CvgRCFlag=Y``, or None if unknown."""
+    rows = extract_rcflag_coverages(log_path)
+    if rows is None:
+        return None
+    return {row.code for row in rows if row.selected}
 
 
 def _io_maps(ruleset) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
@@ -337,12 +424,19 @@ def extract_coverage_rows(
     coverages_path: str | Path | None = None,
     include_zero: bool = False,
 ) -> list[CoverageRow]:
-    """Extract coverage-wise Sum Insured / Base Rate / Final Rate / Premium from a log."""
+    """Extract coverage-wise Sum Insured / Base Rate / Final Rate / Premium from a log.
+
+    When ``RULESET NAME :: RCFlagN`` is present, only coverages with
+    ``CvgRCFlag=Y`` are included (so selected bundles appear, and unselected
+    covers such as Hired Auto with residual premium do not).
+    """
     descriptions = load_coverage_descriptions(coverages_path)
     extract = extract_rulesets(str(log_path))
     by_code: dict[str, CoverageRow] = {}
 
     for ruleset in extract.rulesets:
+        if ruleset.name in {"RCFlagN", "BOPBuildingCvgRCFlagN"}:
+            continue
         inputs, outputs, evaluations = _io_maps(ruleset)
         code = _single_coverage_code(
             inputs.get("BuildingCvgCode"),
@@ -408,7 +502,7 @@ def extract_coverage_rows(
             )
 
     # Fill any missing SI from parallel coverage arrays (not for Liability —
-    # occurrence limit comes from FinalBuilding400127SI logic above).
+    # rating limit comes from LiabilityPremiumNB1 logic above).
     for code, si in _merge_si_from_arrays(log_path).items():
         if code == "400127":
             continue
@@ -431,9 +525,64 @@ def extract_coverage_rows(
                 sum_insured=si,
             )
 
+    # Merge selected coverages from RCFlagN (bundles + policy selection).
+    rcflag_rows = extract_rcflag_coverages(log_path)
+    selected_codes: set[str] | None = None
+    if rcflag_rows is not None:
+        selected_codes = {row.code for row in rcflag_rows if row.selected}
+        for rc in rcflag_rows:
+            if not rc.selected:
+                continue
+            label = (
+                SECTION_COVERAGE_LABELS.get(rc.code)
+                or descriptions.get(rc.code)
+                or rc.code
+            )
+            existing = by_code.get(rc.code)
+            if existing is None:
+                # Add selected covers not found via individual rating rulesets
+                # (e.g. weSure endorsement bundles).
+                candidate = CoverageRow(
+                    code=rc.code,
+                    label=label,
+                    sum_insured=rc.sum_insured,
+                    premium=rc.premium,
+                )
+                if (
+                    include_zero
+                    or coverage_row_has_value(candidate)
+                    or is_bundle_coverage(rc.code, label)
+                ):
+                    by_code[rc.code] = candidate
+                continue
+
+            # Enrich existing row with RCFlagN SI/premium when missing.
+            by_code[rc.code] = CoverageRow(
+                code=existing.code,
+                label=existing.label,
+                sum_insured=existing.sum_insured
+                if existing.sum_insured is not None
+                else rc.sum_insured,
+                base_rate=existing.base_rate,
+                final_rate=existing.final_rate,
+                premium=existing.premium if existing.premium is not None else rc.premium,
+            )
+
     rows = list(by_code.values())
+
+    # Policy selection filter: only CvgRCFlag=Y when RCFlagN is available.
+    if selected_codes is not None:
+        rows = [row for row in rows if row.code in selected_codes]
+
     if not include_zero:
-        rows = [row for row in rows if coverage_row_has_value(row)]
+        filtered: list[CoverageRow] = []
+        for row in rows:
+            if coverage_row_has_value(row):
+                filtered.append(row)
+            elif is_bundle_coverage(row.code, row.label) and selected_codes is not None:
+                # Selected bundle always appears in the coverage-wise list.
+                filtered.append(row)
+        rows = filtered
 
     # Stable order: section coverages first, then numeric code order.
     priority = {code: idx for idx, code in enumerate(SECTION_COVERAGE_CODES.values())}

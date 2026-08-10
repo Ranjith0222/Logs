@@ -4,6 +4,7 @@ from openpyxl import load_workbook
 
 from logs.coverages import (
     extract_coverage_rows,
+    extract_rcflag_coverages,
     load_coverage_descriptions,
     resolve_liability_rating_limit,
 )
@@ -161,13 +162,25 @@ def test_extract_coverage_rows_from_fixture() -> None:
     assert by_code["400127"].sum_insured == "3141815.00"
     assert by_code["400127"].premium == "1100.0000000"
     assert by_code["400127"].label == "Liability"
-    # Only valued coverages: premium > 0, or core Building/BPP/Liability.
-    assert {row.code for row in rows} >= {"400101", "400102", "400127"}
-    assert all(
-        (row.premium and float(row.premium) != 0)
-        or row.code in {"400101", "400102", "400127"}
-        for row in rows
-    )
+    # Selected weSure Standard Endorsement Bundle (RCFlagN Y)
+    assert by_code["400503"].label == "weSure Standard Endorsement Bundle"
+    assert by_code["400503"].premium == "542.00"
+    # Unselected covers must not appear even if residual premium exists
+    assert "400136" not in by_code  # Hired Auto RCFlag=N
+    assert "400440" not in by_code  # Non-owned Auto RCFlag=N
+    assert {row.code for row in rows} == {"400101", "400102", "400127", "400503"}
+
+
+def test_rcflagn_selected_flags() -> None:
+    assert COVERAGE_FIXTURE.exists()
+    rows = extract_rcflag_coverages(COVERAGE_FIXTURE)
+    assert rows is not None
+    by_code = {row.code: row for row in rows}
+    assert by_code["400101"].selected is True
+    assert by_code["400503"].selected is True
+    assert by_code["400136"].selected is False
+    assert by_code["400502"].selected is False  # Essential bundle not selected
+    assert by_code["400503"].premium == "542.00"
 
 
 def test_build_excel_fills_coverage_wise_table(tmp_path: Path) -> None:
@@ -195,15 +208,20 @@ def test_build_excel_fills_coverage_wise_table(tmp_path: Path) -> None:
     assert ws["M4"].value == 0.211
     assert ws["N4"].value == 0.178
     assert ws["O4"].value == 5593
-    # BPP and Liability present; no all-zero filler rows.
     labels = [ws.cell(r, 11).value for r in range(4, 30) if ws.cell(r, 11).value]
     assert "Business Personal Property" in labels
     assert "Liability" in labels
+    assert "weSure Standard Endorsement Bundle" in labels
+    assert "Hired Auto Liability" not in labels
     assert "Business Income And Extra Expense – Revised Period Of Indemnity (in months)" not in labels
     liab_row = next(r for r in range(4, 30) if ws.cell(r, 11).value == "Liability")
     assert ws.cell(liab_row, 12).value == 3141815
     assert ws.cell(liab_row, 15).value == 1100
-    # Total premium row
+    bundle_row = next(
+        r for r in range(4, 30) if ws.cell(r, 11).value == "weSure Standard Endorsement Bundle"
+    )
+    assert ws.cell(bundle_row, 15).value == 542
+    # Total = 5593+115+1100+542
     assert "Total" in [ws.cell(r, 14).value for r in range(4, 30)]
-    premiums = [ws.cell(r, 15).value for r in range(4, 30)]
-    assert any(isinstance(v, (int, float)) and v >= 5593 for v in premiums)
+    total_row = next(r for r in range(4, 30) if ws.cell(r, 14).value == "Total")
+    assert ws.cell(total_row, 15).value == 7350
