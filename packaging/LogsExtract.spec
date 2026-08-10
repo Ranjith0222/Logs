@@ -1,6 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
-# Build on Windows:
-#   pyinstaller packaging/LogsExtract.spec
+# Build on Windows (from repo root), same layout as Policywise_Generator:
+#   .venv\  build\  dist\LogsExtract.exe
+#
+#   build.bat
+#   -or-
+#   pyinstaller packaging/LogsExtract.spec --noconfirm --clean --distpath dist --workpath build
 
 block_cipher = None
 
@@ -49,7 +53,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # windowed desktop app
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
