@@ -2,6 +2,7 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
+from logs.coverages import extract_coverage_rows, load_coverage_descriptions
 from logs.excel_export import (
     build_excel_from_log,
     collect_all_section_values,
@@ -9,11 +10,15 @@ from logs.excel_export import (
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "building_ruleset_snippet.log"
+COVERAGE_FIXTURE = Path(__file__).parent / "fixtures" / "coverage_rating_snippet.log"
 FULL_SAMPLE = Path(__file__).parents[1] / "samples" / "uw_item_rating_building.log"
+CLASS_CODE_TEMPLATE = Path("templates/class_code_template.xlsx")
+LEGACY_TEMPLATE = Path("templates/policy_rating_template.xlsx")
+BOP_COVERAGES = Path("templates/BOP_coverages.xlsx")
 
 
 def test_build_excel_uses_uploaded_template(tmp_path: Path) -> None:
-    template = Path("templates/policy_rating_template.xlsx")
+    template = LEGACY_TEMPLATE
     if not template.exists():
         template = Path("src/logs/data/policy_rating_template.xlsx")
     assert template.exists()
@@ -57,8 +62,9 @@ def test_collect_bpp_and_liability_sections() -> None:
 def test_build_excel_fills_bpp_and_liability_columns(tmp_path: Path) -> None:
     if not FULL_SAMPLE.exists():
         return
+    template = LEGACY_TEMPLATE if LEGACY_TEMPLATE.exists() else None
     out = tmp_path / "multi.xlsx"
-    build_excel_from_log(FULL_SAMPLE, out)
+    build_excel_from_log(FULL_SAMPLE, out, template=template)
     wb = load_workbook(out)
     ws = wb[wb.sheetnames[0]]
     # Building U
@@ -79,3 +85,62 @@ def test_build_excel_fills_bpp_and_liability_columns(tmp_path: Path) -> None:
     assert ws["U3"].value == 1516320
     assert ws["V3"].value == 5000
     assert ws["W3"].value == 1000000
+
+
+def test_load_bop_coverage_descriptions() -> None:
+    path = BOP_COVERAGES if BOP_COVERAGES.exists() else Path("src/logs/data/BOP_coverages.xlsx")
+    assert path.exists()
+    mapping = load_coverage_descriptions(path)
+    assert mapping["400101"] == "Building"
+    assert mapping["400102"] == "Business Personal Property"
+    assert mapping["400127"].startswith("Liability")
+
+
+def test_extract_coverage_rows_from_fixture() -> None:
+    assert COVERAGE_FIXTURE.exists()
+    rows = extract_coverage_rows(COVERAGE_FIXTURE, coverages_path=BOP_COVERAGES)
+    by_code = {row.code: row for row in rows}
+    assert by_code["400101"].sum_insured == "3141815.00"
+    assert by_code["400101"].base_rate == "0.2110000"
+    assert by_code["400101"].final_rate == "0.1780000"
+    assert by_code["400101"].premium == "5593.0000000"
+    assert by_code["400102"].sum_insured == "10000.00"
+    assert by_code["400102"].premium == "115.0000000"
+    assert by_code["400127"].sum_insured == "1000000.00"
+    assert by_code["400127"].premium == "1100.0000000"
+    assert by_code["400101"].label == "Building"
+
+
+def test_build_excel_fills_coverage_wise_table(tmp_path: Path) -> None:
+    template = CLASS_CODE_TEMPLATE
+    if not template.exists():
+        template = Path("src/logs/data/class_code_template.xlsx")
+    assert template.exists()
+    assert COVERAGE_FIXTURE.exists()
+    out = tmp_path / "coverage_wise.xlsx"
+    build_excel_from_log(
+        COVERAGE_FIXTURE,
+        out,
+        template=template,
+        coverages_path=BOP_COVERAGES if BOP_COVERAGES.exists() else None,
+    )
+    ws = load_workbook(out).active
+    # Refined template uses F/G/H for section factors.
+    assert ws["K3"].value == "Coverage Code"
+    assert ws["F3"].value == 3141815
+    assert ws["G3"].value == 10000
+    assert ws["H3"].value == 1000000
+    # Coverage-wise table starts at row 4 under K-O.
+    assert ws["K4"].value == "Building"
+    assert ws["L4"].value == 3141815
+    assert ws["M4"].value == 0.211
+    assert ws["N4"].value == 0.178
+    assert ws["O4"].value == 5593
+    # BPP and Liability present
+    labels = [ws.cell(r, 11).value for r in range(4, 20)]
+    assert "Business Personal Property" in labels
+    assert any(str(v).startswith("Liability") for v in labels if v)
+    # Total premium row
+    premiums = [ws.cell(r, 15).value for r in range(4, 25)]
+    assert "Total" in [ws.cell(r, 14).value for r in range(4, 25)]
+    assert any(isinstance(v, (int, float)) and v >= 5593 for v in premiums)

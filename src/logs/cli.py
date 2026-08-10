@@ -40,6 +40,11 @@ def _excel_main(argv: list[str]) -> int:
         required=True,
         help="Class-code / Policywise Excel template (.xlsx) to fill",
     )
+    parser.add_argument(
+        "--coverages",
+        default=None,
+        help="Optional BOP_coverages.xlsx mapping Coverage Code → Description",
+    )
     args = parser.parse_args(argv)
     try:
         from logs.excel_export import build_excel_from_log
@@ -49,6 +54,7 @@ def _excel_main(argv: list[str]) -> int:
             args.output,
             ruleset=args.ruleset,
             template=args.template,
+            coverages_path=args.coverages,
         )
     except Exception as exc:  # noqa: BLE001
         print(str(exc), file=sys.stderr)

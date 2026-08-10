@@ -65,8 +65,8 @@ class LogsExtractApp(tk.Tk):
         ttk.Label(
             root,
             text=(
-                "Extracts Building (U), Business Personal Property (V), and Liability (W) "
-                "from the full ruleset log into your template."
+                "Extracts Building / BPP / Liability factors and coverage-wise "
+                "Sum Insured, Base Rate, Final Rate, and Premium into your template."
             ),
             style="Body.TLabel",
         ).pack(anchor=tk.W, pady=(0, 14))
