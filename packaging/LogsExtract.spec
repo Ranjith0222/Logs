@@ -13,7 +13,11 @@ a = Analysis(
     pathex=['../src'],
     binaries=[],
     datas=[
+        ('../src/logs/data/class_code_template.xlsx', 'logs/data'),
+        ('../src/logs/data/BOP_coverages.xlsx', 'logs/data'),
         ('../src/logs/data/policy_rating_template.xlsx', 'logs/data'),
+        ('../templates/class_code_template.xlsx', 'templates'),
+        ('../templates/BOP_coverages.xlsx', 'templates'),
         ('../templates/policy_rating_template.xlsx', 'templates'),
     ],
     hiddenimports=[
@@ -24,6 +28,9 @@ a = Analysis(
         'logs.ruleset',
         'logs.extract',
         'logs.scraper',
+        'logs.excel_export',
+        'logs.coverages',
+        'logs.sections',
     ],
     hookspath=[],
     hooksconfig={},

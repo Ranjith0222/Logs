@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-# Canonical rating rows used on the Policywise summary sheet.
-# Property sections (Building=U, BPP=V) use rows 5-15.
-# Liability (W) uses base/LCM/IRPM plus rows 17-19.
+# Canonical rating rows used on the Policywise / class-code summary sheet.
+# Property sections (Building / BPP) use rows 5-15.
+# Liability uses base/LCM/IRPM plus rows 17-19.
+# Column letters are defaults for legacy dual-panel templates (U/V/W);
+# excel_export detects F/G/H on the refined class-code template.
 
 
 @dataclass(frozen=True)
