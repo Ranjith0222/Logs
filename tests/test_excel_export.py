@@ -2,7 +2,11 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-from logs.excel_export import build_excel_from_log, collect_all_section_values
+from logs.excel_export import (
+    build_excel_from_log,
+    collect_all_section_values,
+    collect_section_limits,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "building_ruleset_snippet.log"
 FULL_SAMPLE = Path(__file__).parents[1] / "samples" / "uw_item_rating_building.log"
@@ -18,6 +22,20 @@ def test_build_excel_uses_uploaded_template(tmp_path: Path) -> None:
     wb = load_workbook(out)
     assert "Build" in wb.sheetnames
     assert wb.active["U6"].value == 3.302
+    # Building + BPP limits from Building ruleset inputs
+    assert wb.active["F3"].value == 1516320
+    assert wb.active["G3"].value == 5000
+    assert wb.active["U3"].value == 1516320
+    assert wb.active["V3"].value == 5000
+
+
+def test_collect_section_limits_from_full_log() -> None:
+    if not FULL_SAMPLE.exists():
+        return
+    limits = collect_section_limits(FULL_SAMPLE)
+    assert limits["building"] == "1516320.00"
+    assert limits["bpp"] == "5000.00"
+    assert limits["liability"] == "1000000.00"
 
 
 def test_collect_bpp_and_liability_sections() -> None:
@@ -54,3 +72,10 @@ def test_build_excel_fills_bpp_and_liability_columns(tmp_path: Path) -> None:
     assert ws["W17"].value == 2.974
     assert ws["W18"].value == 1.074
     assert ws["W19"].value == 1
+    # Limits row: Building / BPP / Liability (left F/G/H and right U/V/W)
+    assert ws["F3"].value == 1516320
+    assert ws["G3"].value == 5000
+    assert ws["H3"].value == 1000000
+    assert ws["U3"].value == 1516320
+    assert ws["V3"].value == 5000
+    assert ws["W3"].value == 1000000

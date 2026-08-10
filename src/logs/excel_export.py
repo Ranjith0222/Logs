@@ -37,6 +37,9 @@ def _to_number(raw: str | None) -> float | int | str | None:
     text = str(raw).strip()
     if not text:
         return None
+    # Liability SI can be comma-separated (e.g. "1000000.00, 2000000.00"); use first.
+    if "," in text:
+        text = text.split(",", 1)[0].strip()
     try:
         value = float(text)
     except ValueError:
@@ -51,6 +54,50 @@ def _lookup_aliases(values: dict[str, str | None], aliases: tuple[str, ...]) -> 
         if name in values and values[name] is not None and str(values[name]).strip() != "":
             return values[name]
     return None
+
+
+def _ruleset_io_maps(log_path: str | Path, ruleset_name: str) -> tuple[dict[str, str], dict[str, str]]:
+    from logs.ruleset import extract_rulesets
+
+    extract = extract_rulesets(str(log_path), ruleset_name=ruleset_name)
+    if not extract.rulesets:
+        return {}, {}
+    ruleset = extract.rulesets[0]
+    inputs = {item.name: item.value for item in ruleset.inputs}
+    outputs = {item.name: item.value for item in ruleset.outputs}
+    return inputs, outputs
+
+
+def collect_section_limits(log_path: str | Path) -> dict[str, str | None]:
+    """Resolve Building / BPP / Liability limits from the matching rulesets."""
+    building_in, building_out = _ruleset_io_maps(log_path, "Building")
+    bpp_in, bpp_out = _ruleset_io_maps(log_path, "Business Personal Property")
+    liab_in, liab_out = _ruleset_io_maps(log_path, "Liability")
+
+    building_limit = (
+        building_in.get("BuildingLimit")
+        or building_out.get("BuildingCoverIncrementalSI")
+        or building_in.get("BUserSI")
+    )
+    bpp_limit = (
+        building_in.get("BusinessPersonalPropLimit")
+        or bpp_in.get("BusinessPersonalPropLimit")
+        or bpp_in.get("BusiPersonalPropLimit")
+        or bpp_out.get("BuildingCoverIncrementalSI")
+        or bpp_in.get("BUserSI")
+        or bpp_in.get("IUserSI")
+    )
+    liability_limit = (
+        liab_in.get("BUserSI")
+        or liab_in.get("400127BUserSI")
+        or liab_out.get("BuildingCoverIncrementalSI")
+        or liab_out.get("CoverageIncrementalSI")
+    )
+    return {
+        "building": building_limit,
+        "bpp": bpp_limit,
+        "liability": liability_limit,
+    }
 
 
 def collect_section_values(log_path: str | Path, spec: SectionSpec) -> dict[str, str | None]:
@@ -104,29 +151,46 @@ def fill_policy_header(
         summary["T2"] = f"With IRPM  {irpm}"
 
 
+def fill_limits(
+    workbook: WorkbookType,
+    log_path: str | Path,
+) -> None:
+    """Write Building / BPP / Liability limits into both Limits rows.
+
+    Left block:  F3 / G3 / H3
+    Right block: U3 / V3 / W3  (under ``With IRPM …`` / ``Limits``)
+    """
+    summary = workbook[workbook.sheetnames[0]]
+    limits = collect_section_limits(log_path)
+
+    building = _to_number(limits.get("building"))
+    bpp = _to_number(limits.get("bpp"))
+    liability = _to_number(limits.get("liability"))
+
+    if building is not None:
+        summary["F3"] = building
+        summary["U3"] = building
+    if bpp is not None:
+        summary["G3"] = bpp
+        summary["V3"] = bpp
+    if liability is not None:
+        summary["H3"] = liability
+        summary["W3"] = liability
+
+    # Keep Building cover rates from the Building ruleset when present.
+    _, building_out = _ruleset_io_maps(log_path, "Building")
+    if building_out.get("BuildingCoverBaseRate"):
+        summary["F20"] = _to_number(building_out.get("BuildingCoverBaseRate"))
+    if building_out.get("BuildingCoverUserRate"):
+        summary["F21"] = _to_number(building_out.get("BuildingCoverUserRate"))
+
+
 def fill_limits_from_building(
     workbook: WorkbookType,
     log_path: str | Path,
 ) -> None:
-    from logs.ruleset import extract_rulesets
-
-    extract = extract_rulesets(str(log_path), ruleset_name="Building")
-    if not extract.rulesets:
-        return
-    ruleset = extract.rulesets[0]
-    inputs = {item.name: item.value for item in ruleset.inputs}
-    outputs = {item.name: item.value for item in ruleset.outputs}
-    summary = workbook[workbook.sheetnames[0]]
-    building_limit = inputs.get("BuildingLimit") or outputs.get("BuildingCoverIncrementalSI")
-    bpp_limit = inputs.get("BusinessPersonalPropLimit")
-    if building_limit:
-        summary["F3"] = _to_number(building_limit)
-    if bpp_limit:
-        summary["G3"] = _to_number(bpp_limit)
-    if outputs.get("BuildingCoverBaseRate"):
-        summary["F20"] = _to_number(outputs.get("BuildingCoverBaseRate"))
-    if outputs.get("BuildingCoverUserRate"):
-        summary["F21"] = _to_number(outputs.get("BuildingCoverUserRate"))
+    """Backward-compatible alias for :func:`fill_limits`."""
+    fill_limits(workbook, log_path)
 
 
 def build_excel_from_log(
@@ -161,7 +225,7 @@ def build_excel_from_log(
 
     workbook = load_workbook(resolve_template_path(template))
     fill_policy_header(workbook, policy_no=str(policy_no) if policy_no else None, irpm=irpm)
-    fill_limits_from_building(workbook, log_path)
+    fill_limits(workbook, log_path)
 
     for spec in SECTION_SPECS:
         fill_section_factors(workbook, spec, sections.get(spec.ruleset_name) or {})
