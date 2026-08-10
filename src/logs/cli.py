@@ -22,7 +22,10 @@ def _parse_fields(raw: str | None) -> list[str] | None:
 def _excel_main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="logs excel",
-        description="Build a Policywise-style Excel workbook from a UW ruleset log.",
+        description=(
+            "Build a Policywise-style Excel workbook from a UW ruleset log "
+            "(Building=U, Business Personal Property=V, Liability=W)."
+        ),
     )
     parser.add_argument("source", help="Path to a UW ruleset .log file")
     parser.add_argument(

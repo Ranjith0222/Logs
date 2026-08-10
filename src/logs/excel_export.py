@@ -6,38 +6,8 @@ from typing import Any
 from openpyxl import Workbook, load_workbook
 from openpyxl.workbook.workbook import Workbook as WorkbookType
 
-from logs.desktop.service import run_desktop_extract
-from logs.ruleset import BUILDING_RATING_FACTORS
-
-# Template cells on the policy summary sheet (Building column = U).
-# Labels live in column T; Building values in U; BPP in V; Liability in W.
-BUILDING_FACTOR_CELLS: dict[str, str] = {
-    "BaseLCfac": "U5",  # Base Loss Costs
-    "OccRelativityFactor": "U6",  # Prop Rate Group Number RF
-    "BuiConstructionRelativitiesFactor": "U7",  # Construction Class RF
-    "BuildingRelativityFactor": "U8",  # Limit of Insurance(LOI) RF
-    "PPCFac": "U9",  # Fire PPC Factor RF
-    "BCEGFac": "U10",  # BCEG Factor RF
-    "SprinkledFactor": "U11",  # Sprinkler RF
-    "FixedDedFactor": "U12",  # Deductible RF
-    "LCMFactor": "U13",  # LCM factor (Tier Based)
-    "IRPMFactor": "U14",  # IRPM Factor
-    "400513BCvgFactor": "U15",  # BI / Extra Expense period factor
-}
-
-FACTOR_WRITE_ORDER: tuple[str, ...] = (
-    "BaseLCfac",
-    "OccRelativityFactor",
-    "BuiConstructionRelativitiesFactor",
-    "BuildingRelativityFactor",
-    "PPCFac",
-    "BCEGFac",
-    "SprinkledFactor",
-    "FixedDedFactor",
-    "LCMFactor",
-    "IRPMFactor",
-    "400513BCvgFactor",
-)
+from logs.ruleset import pick_field_values
+from logs.sections import RATING_SECTION_NAMES, SECTION_SPECS, SectionSpec, all_alias_names
 
 TEMPLATE_CANDIDATES = (
     Path(__file__).resolve().parent / "data" / "policy_rating_template.xlsx",
@@ -76,121 +46,125 @@ def _to_number(raw: str | None) -> float | int | str | None:
     return value
 
 
-def _fields_from_payload(payload: dict[str, Any]) -> dict[str, str | None]:
-    ruleset = (payload.get("rulesets") or [{}])[0]
-    fields = dict(ruleset.get("fields") or {})
-    if not fields:
-        for item in ruleset.get("field_details") or []:
-            fields[str(item.get("name"))] = item.get("value")
-    return fields
+def _lookup_aliases(values: dict[str, str | None], aliases: tuple[str, ...]) -> str | None:
+    for name in aliases:
+        if name in values and values[name] is not None and str(values[name]).strip() != "":
+            return values[name]
+    return None
 
 
-def _inputs_from_full_ruleset(payload: dict[str, Any]) -> dict[str, str]:
-    ruleset = (payload.get("rulesets") or [{}])[0]
-    return {
-        str(item.get("name")): str(item.get("value") or "")
-        for item in ruleset.get("inputs") or []
-    }
+def collect_section_values(log_path: str | Path, spec: SectionSpec) -> dict[str, str | None]:
+    """Extract one rating section and resolve logical factor keys."""
+    from logs.ruleset import extract_rulesets
+
+    extract = extract_rulesets(str(log_path), ruleset_name=spec.ruleset_name)
+    if not extract.rulesets:
+        return {}
+
+    picked = pick_field_values(extract.rulesets[0], all_alias_names(spec))
+    raw = {item.name: item.value for item in picked if item.found}
+
+    resolved: dict[str, str | None] = {}
+    for key, aliases in spec.field_aliases.items():
+        resolved[key] = _lookup_aliases(raw, aliases)
+    return resolved
 
 
-def _outputs_from_full_ruleset(payload: dict[str, Any]) -> dict[str, str]:
-    ruleset = (payload.get("rulesets") or [{}])[0]
-    return {
-        str(item.get("name")): str(item.get("value") or "")
-        for item in ruleset.get("outputs") or []
-    }
+def collect_all_section_values(log_path: str | Path) -> dict[str, dict[str, str | None]]:
+    return {spec.ruleset_name: collect_section_values(log_path, spec) for spec in SECTION_SPECS}
 
 
-def fill_building_factors(
+def fill_section_factors(
     workbook: WorkbookType,
-    fields: dict[str, str | None],
-    *,
-    policy_no: str | None = None,
+    spec: SectionSpec,
+    values: dict[str, str | None],
 ) -> None:
-    """Write Building rating factors into the summary sheet Building column (U)."""
+    summary = workbook[workbook.sheetnames[0]]
+    for key, row in spec.cell_rows.items():
+        if key not in values or values[key] is None:
+            continue
+        cell = f"{spec.column}{row}"
+        summary[cell] = _to_number(values[key])
+
+
+def fill_policy_header(
+    workbook: WorkbookType,
+    *,
+    policy_no: str | None,
+    irpm: str | None = None,
+) -> None:
     summary = workbook[workbook.sheetnames[0]]
     if policy_no:
         summary["A1"] = policy_no
-        # Rename first sheet to policy number when possible.
         try:
             summary.title = policy_no[:31]
         except ValueError:
             pass
-
-    for name in FACTOR_WRITE_ORDER:
-        cell = BUILDING_FACTOR_CELLS.get(name)
-        if not cell or name not in fields:
-            continue
-        summary[cell] = _to_number(fields.get(name))
-
-    irpm = fields.get("IRPMFactor")
     if irpm is not None:
         summary["T2"] = f"With IRPM  {irpm}"
 
 
-def fill_limits_and_rates(
+def fill_limits_from_building(
     workbook: WorkbookType,
-    *,
-    inputs: dict[str, str] | None = None,
-    outputs: dict[str, str] | None = None,
+    log_path: str | Path,
 ) -> None:
-    """Fill common Building/BPP limits and rates when available from the ruleset."""
-    summary = workbook[workbook.sheetnames[0]]
-    inputs = inputs or {}
-    outputs = outputs or {}
+    from logs.ruleset import extract_rulesets
 
+    extract = extract_rulesets(str(log_path), ruleset_name="Building")
+    if not extract.rulesets:
+        return
+    ruleset = extract.rulesets[0]
+    inputs = {item.name: item.value for item in ruleset.inputs}
+    outputs = {item.name: item.value for item in ruleset.outputs}
+    summary = workbook[workbook.sheetnames[0]]
     building_limit = inputs.get("BuildingLimit") or outputs.get("BuildingCoverIncrementalSI")
     bpp_limit = inputs.get("BusinessPersonalPropLimit")
     if building_limit:
         summary["F3"] = _to_number(building_limit)
     if bpp_limit:
         summary["G3"] = _to_number(bpp_limit)
-
-    base_rate = outputs.get("BuildingCoverBaseRate") or outputs.get("BCBasePremium")
-    user_rate = outputs.get("BuildingCoverUserRate")
-    # Left-side premium helpers when present.
     if outputs.get("BuildingCoverBaseRate"):
         summary["F20"] = _to_number(outputs.get("BuildingCoverBaseRate"))
     if outputs.get("BuildingCoverUserRate"):
-        summary["F21"] = _to_number(user_rate)
-    elif outputs.get("BuildingCoverAnnPrem") and building_limit:
-        # leave formulas intact on right side; optional left-side seed
-        pass
-    _ = base_rate
+        summary["F21"] = _to_number(outputs.get("BuildingCoverUserRate"))
 
 
 def build_excel_from_log(
     log_path: str | Path,
     output_path: str | Path,
     *,
-    ruleset: str = "Building",
+    ruleset: str | None = None,
     template: str | Path | None = None,
 ) -> Path:
-    """Extract Building factors from a UW log and write a Policywise-style Excel workbook."""
-    factors_payload = run_desktop_extract(
-        log_path,
-        ruleset=ruleset,
-        mode="building-factors",
-    )
-    full_payload = run_desktop_extract(
-        log_path,
-        ruleset=ruleset,
-        mode="full",
-    )
-    fields = _fields_from_payload(factors_payload)
-    inputs = _inputs_from_full_ruleset(full_payload)
-    outputs = _outputs_from_full_ruleset(full_payload)
+    """Build Policywise-style Excel with Building (U), BPP (V), Liability (W) factors.
 
-    header = factors_payload.get("header") or {}
-    policy_no = (
-        header.get("policy_no")
-        or inputs.get("PolNo")
-        or Path(log_path).stem.split("_")[0]
-    )
+    ``ruleset`` is accepted for CLI compatibility; when omitted/Building default,
+    all three rating sections are filled.
+    """
+    _ = ruleset  # multi-section export is the default Policywise layout
+    sections = collect_all_section_values(log_path)
+
+    from logs.ruleset import extract_rulesets
+
+    building_extract = extract_rulesets(str(log_path), ruleset_name="Building")
+    header = {
+        "policy_no": building_extract.header.policy_no,
+        "module_id": building_extract.header.module_id,
+        "project_id": building_extract.header.project_id,
+    }
+    inputs = {
+        item.name: item.value
+        for item in (building_extract.rulesets[0].inputs if building_extract.rulesets else [])
+    }
+    policy_no = header.get("policy_no") or inputs.get("PolNo") or Path(log_path).stem.split("_")[0]
+    irpm = (sections.get("Building") or {}).get("irpm")
 
     workbook = load_workbook(resolve_template_path(template))
-    fill_building_factors(workbook, fields, policy_no=str(policy_no) if policy_no else None)
-    fill_limits_and_rates(workbook, inputs=inputs, outputs=outputs)
+    fill_policy_header(workbook, policy_no=str(policy_no) if policy_no else None, irpm=irpm)
+    fill_limits_from_building(workbook, log_path)
+
+    for spec in SECTION_SPECS:
+        fill_section_factors(workbook, spec, sections.get(spec.ruleset_name) or {})
 
     dest = Path(output_path)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -204,18 +178,37 @@ def build_excel_from_payload(
     *,
     full_payload: dict[str, Any] | None = None,
     template: str | Path | None = None,
+    log_path: str | Path | None = None,
 ) -> Path:
-    """Write Excel from an already-extracted desktop payload."""
-    fields = _fields_from_payload(payload)
+    """Write Excel from payloads; if log_path is given, fill all three sections."""
+    if log_path:
+        return build_excel_from_log(log_path, output_path, template=template)
+
+    # Building-only fallback for callers that only have Building extract data.
+    fields = {
+        str(k): (None if v is None else str(v))
+        for k, v in ((payload.get("rulesets") or [{}])[0].get("fields") or {}).items()
+    }
     source = full_payload or payload
-    inputs = _inputs_from_full_ruleset(source)
-    outputs = _outputs_from_full_ruleset(source)
     header = payload.get("header") or {}
+    inputs = {
+        str(item.get("name")): str(item.get("value") or "")
+        for item in (source.get("rulesets") or [{}])[0].get("inputs") or []
+    }
     policy_no = header.get("policy_no") or inputs.get("PolNo")
 
+    building_spec = SECTION_SPECS[0]
+    values: dict[str, str | None] = {}
+    for key, aliases in building_spec.field_aliases.items():
+        values[key] = _lookup_aliases(fields, aliases)
+
     workbook = load_workbook(resolve_template_path(template))
-    fill_building_factors(workbook, fields, policy_no=str(policy_no) if policy_no else None)
-    fill_limits_and_rates(workbook, inputs=inputs, outputs=outputs)
+    fill_policy_header(
+        workbook,
+        policy_no=str(policy_no) if policy_no else None,
+        irpm=values.get("irpm"),
+    )
+    fill_section_factors(workbook, building_spec, values)
 
     dest = Path(output_path)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -224,14 +217,16 @@ def build_excel_from_payload(
 
 
 def create_blank_factor_workbook(output_path: str | Path) -> Path:
-    """Fallback minimal workbook if template is unavailable."""
     wb = Workbook()
     ws = wb.active
-    ws.title = "BuildingFactors"
-    ws["A1"] = "Factor"
-    ws["B1"] = "Value"
-    for index, name in enumerate(BUILDING_RATING_FACTORS, start=2):
-        ws.cell(index, 1, name)
+    ws.title = "RatingFactors"
+    ws["A1"] = "Section"
+    ws["B1"] = "Factor"
+    ws["C1"] = "Value"
+    row = 2
+    for name in RATING_SECTION_NAMES:
+        ws.cell(row, 1, name)
+        row += 1
     dest = Path(output_path)
     dest.parent.mkdir(parents=True, exist_ok=True)
     wb.save(dest)

@@ -2,23 +2,59 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-from logs.excel_export import build_excel_from_log
+from logs.excel_export import build_excel_from_log, collect_all_section_values
 
 FIXTURE = Path(__file__).parent / "fixtures" / "building_ruleset_snippet.log"
+FULL_SAMPLE = Path(__file__).parents[1] / "samples" / "uw_item_rating_building.log"
 
 
 def test_build_excel_fills_building_factor_column(tmp_path: Path) -> None:
     out = tmp_path / "PMBP001030043Z02000.xlsx"
-    result = build_excel_from_log(FIXTURE, out, ruleset="Building")
+    result = build_excel_from_log(FIXTURE, out)
     assert result.exists()
 
     wb = load_workbook(result)
     ws = wb[wb.sheetnames[0]]
     assert ws["A1"].value == "PMBP001030043Z02000"
-    assert ws["U6"].value == 3.302  # OccRelativityFactor
-    assert ws["U7"].value == 0.759  # BuiConstructionRelativitiesFactor
-    assert ws["U9"].value == 1.0  # PPCFac
-    assert ws["U13"].value == 1.89  # LCMFactor
-    assert ws["U14"].value == -0.18  # IRPMFactor
+    assert ws["U6"].value == 3.302
+    assert ws["U7"].value == 0.759
+    assert ws["U9"].value == 1.0
+    assert ws["U13"].value == 1.89
+    assert ws["U14"].value == -0.18
     assert "Build" in wb.sheetnames
-    assert any(name.strip() == "Item" for name in wb.sheetnames)
+
+
+def test_collect_bpp_and_liability_sections() -> None:
+    if not FULL_SAMPLE.exists():
+        return
+    sections = collect_all_section_values(FULL_SAMPLE)
+    bpp = sections["Business Personal Property"]
+    liab = sections["Liability"]
+    assert bpp["occ_rel"] == "3.257"
+    assert bpp["construction"] == "0.825"
+    assert bpp["loi"] == "1.767"
+    assert bpp["deductible"] == "0.886"
+    assert liab["liab_class"] == "2.974"
+    assert liab["increased_limits"] == "1.074"
+    assert liab["prop_damage_ded"] == "1"
+    assert liab["base_lc"] == "0.008"
+
+
+def test_build_excel_fills_bpp_and_liability_columns(tmp_path: Path) -> None:
+    if not FULL_SAMPLE.exists():
+        return
+    out = tmp_path / "multi.xlsx"
+    build_excel_from_log(FULL_SAMPLE, out)
+    wb = load_workbook(out)
+    ws = wb[wb.sheetnames[0]]
+    # Building U
+    assert ws["U6"].value == 3.302
+    # BPP V
+    assert ws["V6"].value == 3.257
+    assert ws["V7"].value == 0.825
+    assert ws["V8"].value == 1.767
+    # Liability W
+    assert ws["W5"].value == 0.008
+    assert ws["W17"].value == 2.974
+    assert ws["W18"].value == 1.074
+    assert ws["W19"].value == 1

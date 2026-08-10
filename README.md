@@ -59,21 +59,18 @@ logs excel samples\uw_item_rating_building.log -o dist\PMBP001030043Z02000.xlsx
 
 Or in the desktop app: **Save Excel**.
 
-Building factors are written into column **U** on the summary sheet:
+Building / BPP / Liability factors are written into columns **U / V / W**:
 
-| Cell | Factor |
-|------|--------|
-| U5 | BaseLCfac |
-| U6 | OccRelativityFactor |
-| U7 | BuiConstructionRelativitiesFactor |
-| U8 | BuildingRelativityFactor |
-| U9 | PPCFac |
-| U10 | BCEGFac |
-| U11 | SprinkledFactor |
-| U12 | FixedDedFactor |
-| U13 | LCMFactor |
-| U14 | IRPMFactor |
-| U15 | 400513BCvgFactor |
+| Row | Label | Building (U) | BPP (V) | Liability (W) |
+|-----|-------|--------------|---------|---------------|
+| 5 | Base Loss Costs | BaseLCfac | BaseLCFactor | BaseLCFactor |
+| 6 | Prop Rate Group RF | OccRelativityFactor | OccRelativityFactor | |
+| 7 | Construction Class RF | BuiConstruction… | BPPConstruction… | |
+| 8 | LOI RF | BuildingRelativityFactor | BusinessRelativityFactor | |
+| 9–12 | PPC / BCEG / Sprinkler / Deductible | Building fields | BPP fields | |
+| 13–14 | LCM / IRPM | LCMFactor / IRPMFactor | same | same |
+| 15 | BI period factor | 400513BCvgFactor | 400513BCvgFactor | |
+| 17–19 | Liability class / limits / PD ded | | | LiabilityClassGrpFactor / IncreasedLimitsFactor / PropDamageDedFactor |
 
 ## CLI (optional)
 
