@@ -85,9 +85,11 @@ def _ruleset_io_maps(log_path: str | Path, ruleset_name: str) -> tuple[dict[str,
 
 def collect_section_limits(log_path: str | Path) -> dict[str, str | None]:
     """Resolve Building / BPP / Liability limits from the matching rulesets."""
+    from logs.coverages import resolve_liability_occurrence_limit
+    from logs.ruleset import extract_rulesets
+
     building_in, building_out = _ruleset_io_maps(log_path, "Building")
     bpp_in, bpp_out = _ruleset_io_maps(log_path, "Business Personal Property")
-    liab_in, liab_out = _ruleset_io_maps(log_path, "Liability")
 
     building_limit = (
         building_in.get("BuildingLimit")
@@ -102,12 +104,16 @@ def collect_section_limits(log_path: str | Path) -> dict[str, str | None]:
         or bpp_in.get("BUserSI")
         or bpp_in.get("IUserSI")
     )
-    liability_limit = (
-        liab_in.get("BUserSI")
-        or liab_in.get("400127BUserSI")
-        or liab_out.get("BuildingCoverIncrementalSI")
-        or liab_out.get("CoverageIncrementalSI")
-    )
+
+    liability_limit = None
+    liab_extract = extract_rulesets(str(log_path), ruleset_name="Liability")
+    if liab_extract.rulesets:
+        ruleset = liab_extract.rulesets[0]
+        liab_in = {item.name: item.value for item in ruleset.inputs}
+        liab_out = {item.name: item.value for item in ruleset.outputs}
+        liab_eval = {item.name: item.value for item in ruleset.evaluations}
+        liability_limit = resolve_liability_occurrence_limit(liab_in, liab_out, liab_eval)
+
     return {
         "building": building_limit,
         "bpp": bpp_limit,

@@ -108,7 +108,14 @@ def test_extract_coverage_rows_from_fixture() -> None:
     assert by_code["400102"].premium == "115.0000000"
     assert by_code["400127"].sum_insured == "1000000.00"
     assert by_code["400127"].premium == "1100.0000000"
-    assert by_code["400101"].label == "Building"
+    assert by_code["400127"].label == "Liability"
+    # Only valued coverages: premium > 0, or core Building/BPP/Liability.
+    assert {row.code for row in rows} >= {"400101", "400102", "400127"}
+    assert all(
+        (row.premium and float(row.premium) != 0)
+        or row.code in {"400101", "400102", "400127"}
+        for row in rows
+    )
 
 
 def test_build_excel_fills_coverage_wise_table(tmp_path: Path) -> None:
@@ -136,11 +143,12 @@ def test_build_excel_fills_coverage_wise_table(tmp_path: Path) -> None:
     assert ws["M4"].value == 0.211
     assert ws["N4"].value == 0.178
     assert ws["O4"].value == 5593
-    # BPP and Liability present
-    labels = [ws.cell(r, 11).value for r in range(4, 20)]
+    # BPP and Liability present; no all-zero filler rows.
+    labels = [ws.cell(r, 11).value for r in range(4, 30) if ws.cell(r, 11).value]
     assert "Business Personal Property" in labels
-    assert any(str(v).startswith("Liability") for v in labels if v)
+    assert "Liability" in labels
+    assert "Business Income And Extra Expense – Revised Period Of Indemnity (in months)" not in labels
     # Total premium row
-    premiums = [ws.cell(r, 15).value for r in range(4, 25)]
-    assert "Total" in [ws.cell(r, 14).value for r in range(4, 25)]
+    assert "Total" in [ws.cell(r, 14).value for r in range(4, 30)]
+    premiums = [ws.cell(r, 15).value for r in range(4, 30)]
     assert any(isinstance(v, (int, float)) and v >= 5593 for v in premiums)
