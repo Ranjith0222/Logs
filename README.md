@@ -48,6 +48,33 @@ pip install -e ".[dev]"
 logs desktop
 ```
 
+## Save Excel (Policywise format)
+
+After extracting a Building ruleset log, save a workbook like
+`PMBP001029427Z01.xlsx` (summary + Build + Item sheets):
+
+```powershell
+logs excel samples\uw_item_rating_building.log -o dist\PMBP001030043Z02000.xlsx
+```
+
+Or in the desktop app: **Save Excel**.
+
+Building factors are written into column **U** on the summary sheet:
+
+| Cell | Factor |
+|------|--------|
+| U5 | BaseLCfac |
+| U6 | OccRelativityFactor |
+| U7 | BuiConstructionRelativitiesFactor |
+| U8 | BuildingRelativityFactor |
+| U9 | PPCFac |
+| U10 | BCEGFac |
+| U11 | SprinkledFactor |
+| U12 | FixedDedFactor |
+| U13 | LCMFactor |
+| U14 | IRPMFactor |
+| U15 | 400513BCvgFactor |
+
 ## CLI (optional)
 
 ```powershell
