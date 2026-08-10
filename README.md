@@ -7,17 +7,12 @@ from ItemRating execution logs. Package it as a Windows `.exe` — no browser re
 
 - Python 3.12+ (Windows: install from [python.org](https://www.python.org/downloads/) so Tcl/Tk is included)
 
-<<<<<<< HEAD
 ## Run the desktop app (local)
-=======
-## Use locally (GUI)
->>>>>>> origin/main
 
 ```bash
 git clone https://github.com/Ranjith0222/Logs.git
 cd Logs
 
-<<<<<<< HEAD
 python -m venv .venv
 # Windows:
 .venv\Scripts\activate
@@ -55,31 +50,12 @@ Push to `main` (or run **Build Windows EXE** manually). Download the
 `LogsExtract-windows` artifact from the workflow run.
 
 ## CLI (optional)
-=======
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-
-logs gui --host 127.0.0.1 --port 8000
-```
-
-Open **http://127.0.0.1:8000**
-
-1. Drop / choose a UW ItemRating `.log` file  
-2. Keep ruleset `Building` and mode `Building factors`  
-3. Click **Extract**  
-4. Use **Download JSON** or **Download CSV** to save the factor values  
-
-You can also run:
 
 ```bash
-logs-gui --host 0.0.0.0 --port 8000
-```
+# Line-log extract
+logs samples/app.log --level ERROR
 
-## CLI
->>>>>>> origin/main
-
-```bash
+# Building rating factors from the UW sample
 logs samples/uw_item_rating_building.log --ruleset Building --building-factors
 ```
 
@@ -91,9 +67,12 @@ logs samples/uw_item_rating_building.log --ruleset Building --building-factors
 
 ## Optional web UI
 
-The older browser UI is still available if you want it:
+The browser UI is still available if you want it:
 
 ```bash
 pip install -e ".[web]"
 logs gui --host 127.0.0.1 --port 8000
 ```
+
+Open **http://127.0.0.1:8000**, drop a `.log`, extract Building factors, then use
+**Download JSON** / **Download CSV**.
