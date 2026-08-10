@@ -87,6 +87,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     argv_list = list(sys.argv[1:] if argv is None else argv)
+    if argv_list and argv_list[0] in {"desktop", "app"}:
+        from logs.desktop.app import main as desktop_main
+
+        return desktop_main(argv_list[1:])
     if argv_list and argv_list[0] == "gui":
         from logs.web.server import main as gui_main
 

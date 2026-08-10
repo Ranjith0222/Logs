@@ -1,73 +1,60 @@
 # Logs
 
-A small Python CLI and GUI for scraping structured logs and extracting UW ruleset
-execution data from local paths or URLs.
+Native **desktop** app for extracting UW Building rating factors from ItemRating
+logs. Build it the same way as Policywise_Generator: `.venv` + `build` + `dist`.
 
 ## Requirements
 
-- Python 3.12+
+- Windows
+- Python 3.12+ from [python.org](https://www.python.org/downloads/) (Tcl/Tk included; check **Add to PATH**)
 
-## Use locally (GUI)
+## Build EXE (Policywise-style folders)
 
-```bash
-git clone https://github.com/Ranjith0222/Logs.git
-cd Logs
+```text
+Logs\
+  .venv\                 virtual environment
+  build\                 PyInstaller work files
+  dist\LogsExtract.exe   <-- double-click to open the app
+  build.bat              one-click build
+```
 
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+### Steps
+
+1. Clone / download this repo  
+2. Double-click **`build.bat`**  
+3. When it finishes, open **`dist\LogsExtract.exe`**
+
+Or from PowerShell in the repo folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build_windows_exe.ps1
+```
+
+## Use the app
+
+1. Open `dist\LogsExtract.exe`  
+2. **Browse…** → select your UW `.log`  
+3. Ruleset: `Building`  
+4. Mode: `building-factors`  
+5. **Extract**  
+6. **Save JSON** / **Save CSV** if needed  
+
+## Dev run (without building EXE)
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
 pip install -e ".[dev]"
-
-logs gui --host 127.0.0.1 --port 8000
+logs desktop
 ```
 
-Open **http://127.0.0.1:8000**
+## CLI (optional)
 
-1. Drop / choose a UW ItemRating `.log` file  
-2. Keep ruleset `Building` and mode `Building factors`  
-3. Click **Extract**  
-4. Use **Download JSON** or **Download CSV** to save the factor values  
-
-You can also run:
-
-```bash
-logs-gui --host 0.0.0.0 --port 8000
+```powershell
+logs samples\uw_item_rating_building.log --ruleset Building --building-factors
 ```
 
-## CLI
-
-```bash
-# Line-log extract
-logs samples/app.log --level ERROR
-
-# Building rating factors from the UW sample
-logs samples/uw_item_rating_building.log --ruleset Building --building-factors
-```
-
-## Development
-
-```bash
-ruff check .
-pytest
-```
-
-## Options
-
-| Flag | Description |
-|------|-------------|
-| `--level LEVEL` | Keep only this log level (`ERROR`, `WARN`, `INFO`, …) |
-| `--contains TEXT` | Keep messages containing this text (case-insensitive) |
-| `--regex PATTERN` | Keep messages matching this regular expression |
-| `--since TIMESTAMP` | Keep entries at or after this timestamp |
-| `--until TIMESTAMP` | Keep entries at or before this timestamp |
-| `--ruleset NAME` | Extract a UW ruleset execution by name (e.g. `Building`) |
-| `--satisfied-only` | Keep only rulesets whose precondition was satisfied |
-| `--fields A,B,C` | Extract only these ruleset field names |
-| `--building-factors` | Shortcut for the standard Building rating factor set |
-| `--format {raw,json,csv}` | Output format (default: `json` with `--ruleset`, else `raw`) |
-| `-o` / `--output PATH` | Write the extract to a file |
-| `--quiet` | Suppress the match-count line on stderr |
-
-`--building-factors` selects:
+## Factors extracted
 
 `LCMFactor`, `IRPMFactor`, `PropertyRateNumbers`, `OccRelativityFactor`,
 `BuiConstructionRelativitiesFactor`, `BuildingRelativityFactor`, `PPCFac`,

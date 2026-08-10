@@ -1,25 +1,33 @@
 [project]
 name = "logs"
-version = "0.5.0"
-description = "Log scraping, ruleset extraction, and extract builder CLI/GUI"
+version = "0.6.0"
+description = "Log scraping and native desktop extract app (Windows .exe supported)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "requests>=2.32.3,<3",
+]
+
+[project.optional-dependencies]
+web = [
     "fastapi>=0.115.0,<1",
     "uvicorn[standard]>=0.34.0,<1",
     "python-multipart>=0.0.20,<1",
 ]
-
-[project.optional-dependencies]
+desktop = []
 dev = [
     "pytest>=8.3.4,<9",
     "ruff>=0.9.2,<1",
     "httpx>=0.28.0,<1",
+    "fastapi>=0.115.0,<1",
+    "uvicorn[standard]>=0.34.0,<1",
+    "python-multipart>=0.0.20,<1",
+    "pyinstaller>=6.11.0,<7",
 ]
 
 [project.scripts]
 logs = "logs.cli:main"
+logs-desktop = "logs.desktop.app:main"
 logs-gui = "logs.web.server:main"
 
 [build-system]
