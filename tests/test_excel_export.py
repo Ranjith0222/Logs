@@ -2,7 +2,11 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-from logs.coverages import extract_coverage_rows, load_coverage_descriptions
+from logs.coverages import (
+    extract_coverage_rows,
+    load_coverage_descriptions,
+    resolve_liability_rating_limit,
+)
 from logs.excel_export import (
     build_excel_from_log,
     collect_all_section_values,
@@ -40,7 +44,8 @@ def test_collect_section_limits_from_full_log() -> None:
     limits = collect_section_limits(FULL_SAMPLE)
     assert limits["building"] == "1516320.00"
     assert limits["bpp"] == "5000.00"
-    assert limits["liability"] == "1000000.00"
+    # SALES + BusinessCatgeory 18 → BuildingLimit (LiabilityPremiumNB1)
+    assert limits["liability"] == "1516320.00"
 
 
 def test_collect_bpp_and_liability_sections() -> None:
@@ -81,10 +86,10 @@ def test_build_excel_fills_bpp_and_liability_columns(tmp_path: Path) -> None:
     # Limits row: Building / BPP / Liability (left F/G/H and right U/V/W)
     assert ws["F3"].value == 1516320
     assert ws["G3"].value == 5000
-    assert ws["H3"].value == 1000000
+    assert ws["H3"].value == 1516320
     assert ws["U3"].value == 1516320
     assert ws["V3"].value == 5000
-    assert ws["W3"].value == 1000000
+    assert ws["W3"].value == 1516320
 
 
 def test_load_bop_coverage_descriptions() -> None:
@@ -94,6 +99,52 @@ def test_load_bop_coverage_descriptions() -> None:
     assert mapping["400101"] == "Building"
     assert mapping["400102"] == "Business Personal Property"
     assert mapping["400127"].startswith("Liability")
+
+
+def test_resolve_liability_rating_limit_branches() -> None:
+    building = "3141815.00"
+    bpp = "10000.00"
+    turnover = "390000"
+    payroll = "800000.00"
+    base_in = {"BuildingLimit": building, "BusiPersonalPropLimit": bpp}
+    base_ev = {"AnnualTurnover": turnover, "Payroll": payroll}
+
+    # SALES + category 18 → BuildingLimit
+    assert (
+        resolve_liability_rating_limit(
+            {**base_in, "BusinessCatgeory": "18"},
+            {},
+            {**base_ev, "LiabilityExpBase": "SALES", "18InsuredStatus": "L"},
+        )
+        == building
+    )
+    # SALES + not 18 → AnnualTurnover
+    assert (
+        resolve_liability_rating_limit(
+            {**base_in, "BusinessCatgeory": "14"},
+            {},
+            {**base_ev, "LiabilityExpBase": "SALES", "N18InsuredStatus": "O"},
+        )
+        == turnover
+    )
+    # LOI + occupant + BPP → BPP
+    assert (
+        resolve_liability_rating_limit(
+            {**base_in, "BusinessCatgeory": "14"},
+            {},
+            {**base_ev, "LiabilityExpBase": "LOI", "N18InsuredStatus": "O"},
+        )
+        == bpp
+    )
+    # PAY + not 18 → Payroll
+    assert (
+        resolve_liability_rating_limit(
+            {**base_in, "BusinessCatgeory": "14"},
+            {},
+            {**base_ev, "LiabilityExpBase": "PAY", "N18InsuredStatus": "O"},
+        )
+        == payroll
+    )
 
 
 def test_extract_coverage_rows_from_fixture() -> None:
@@ -106,7 +157,8 @@ def test_extract_coverage_rows_from_fixture() -> None:
     assert by_code["400101"].premium == "5593.0000000"
     assert by_code["400102"].sum_insured == "10000.00"
     assert by_code["400102"].premium == "115.0000000"
-    assert by_code["400127"].sum_insured == "1000000.00"
+    # LiabilityPremiumNB1: SALES + category 18 → BuildingLimit
+    assert by_code["400127"].sum_insured == "3141815.00"
     assert by_code["400127"].premium == "1100.0000000"
     assert by_code["400127"].label == "Liability"
     # Only valued coverages: premium > 0, or core Building/BPP/Liability.
@@ -136,7 +188,7 @@ def test_build_excel_fills_coverage_wise_table(tmp_path: Path) -> None:
     assert ws["K3"].value == "Coverage Code"
     assert ws["F3"].value == 3141815
     assert ws["G3"].value == 10000
-    assert ws["H3"].value == 1000000
+    assert ws["H3"].value == 3141815
     # Coverage-wise table starts at row 4 under K-O.
     assert ws["K4"].value == "Building"
     assert ws["L4"].value == 3141815
@@ -148,6 +200,9 @@ def test_build_excel_fills_coverage_wise_table(tmp_path: Path) -> None:
     assert "Business Personal Property" in labels
     assert "Liability" in labels
     assert "Business Income And Extra Expense – Revised Period Of Indemnity (in months)" not in labels
+    liab_row = next(r for r in range(4, 30) if ws.cell(r, 11).value == "Liability")
+    assert ws.cell(liab_row, 12).value == 3141815
+    assert ws.cell(liab_row, 15).value == 1100
     # Total premium row
     assert "Total" in [ws.cell(r, 14).value for r in range(4, 30)]
     premiums = [ws.cell(r, 15).value for r in range(4, 30)]

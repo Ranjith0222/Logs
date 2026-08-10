@@ -152,29 +152,140 @@ def _io_maps(ruleset) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
     return inputs, outputs, evaluations
 
 
-def resolve_liability_occurrence_limit(
+def _lookup_amount(
+    *names: str,
     inputs: dict[str, str],
     outputs: dict[str, str],
-    evaluations: dict[str, str] | None = None,
+    evaluations: dict[str, str],
 ) -> str | None:
-    """Liability occurrence limit (400127) from UW FinalBuilding400127SI logic.
-
-    Liability outputs ``BuildingCoverIncrementalSI`` as a comma-separated triple
-    (400127 occurrence, 400129 products, 400151 aggregate). Use the dedicated
-    400127 final/user SI fields instead of blindly taking the first list value.
-    """
-    evaluations = evaluations or {}
-    for name in LIABILITY_OCCURRENCE_LIMIT_FIELDS:
+    for name in names:
         for source in (evaluations, inputs, outputs):
             if name not in source:
                 continue
             value = _first_scalar(source.get(name))
             if value is not None:
                 return value
-    # Last resort: first value of the multi-cover SI list (occurrence slot).
+    return None
+
+
+def resolve_liability_occurrence_limit(
+    inputs: dict[str, str],
+    outputs: dict[str, str],
+    evaluations: dict[str, str] | None = None,
+) -> str | None:
+    """Liability occurrence cover SI (400127), e.g. FinalBuilding400127SI."""
+    evaluations = evaluations or {}
+    for name in LIABILITY_OCCURRENCE_LIMIT_FIELDS:
+        value = _lookup_amount(name, inputs=inputs, outputs=outputs, evaluations=evaluations)
+        if value is not None:
+            return value
     return _first_scalar(
         outputs.get("BuildingCoverIncrementalSI") or outputs.get("CoverageIncrementalSI")
     )
+
+
+def resolve_liability_rating_limit(
+    inputs: dict[str, str],
+    outputs: dict[str, str],
+    evaluations: dict[str, str] | None = None,
+) -> str | None:
+    """Liability limit / exposure used by ``LiabilityPremiumNB1``.
+
+    Mirrors the substituted FreeMarker branches:
+
+    - SALES + category != 18 → AnnualTurnover
+    - SALES + category == 18 → BuildingLimit
+    - PAY + category != 18 → Payroll
+    - PAY + category == 18 → BuildingLimit
+    - LOI + category == 18 → BuildingLimit
+    - LOI + category != 18 + Occupant (O) + BPP != 0 → BPP limit
+    - LOI + category != 18 otherwise → BuildingLimit
+    - else → BuildingLimit
+    """
+    evaluations = evaluations or {}
+    exp_base = (
+        _lookup_amount(
+            "LiabilityExpBase",
+            "LiabExpBase",
+            inputs=inputs,
+            outputs=outputs,
+            evaluations=evaluations,
+        )
+        or ""
+    ).strip().upper()
+    category = (
+        _lookup_amount(
+            "BusinessCatgeory",
+            "BusinessCategory",
+            inputs=inputs,
+            outputs=outputs,
+            evaluations=evaluations,
+        )
+        or ""
+    ).strip()
+    insured_status = (
+        _lookup_amount(
+            "18InsuredStatus" if category == "18" else "N18InsuredStatus",
+            "18InsuredStatus",
+            "N18InsuredStatus",
+            inputs=inputs,
+            outputs=outputs,
+            evaluations=evaluations,
+        )
+        or ""
+    ).strip().upper()
+
+    building_limit = _lookup_amount(
+        "BuildingLimit",
+        "48BuildingLimit",
+        "FinalBuildingBPPLimit",
+        inputs=inputs,
+        outputs=outputs,
+        evaluations=evaluations,
+    )
+    bpp_limit = _lookup_amount(
+        "BusiPersonalPropLimit",
+        "BusinessPersonalPropLimit",
+        "48BPPLimit",
+        inputs=inputs,
+        outputs=outputs,
+        evaluations=evaluations,
+    )
+    annual_turnover = _lookup_amount(
+        "AnnualTurnover",
+        "TAnnualTurnover",
+        "EstimatedAnnualTurnover",
+        inputs=inputs,
+        outputs=outputs,
+        evaluations=evaluations,
+    )
+    payroll = _lookup_amount(
+        "Payroll",
+        "TPayroll",
+        inputs=inputs,
+        outputs=outputs,
+        evaluations=evaluations,
+    )
+
+    is_lessors = category == "18"
+
+    if exp_base == "SALES":
+        if is_lessors:
+            return building_limit
+        return annual_turnover or building_limit
+    if exp_base == "PAY":
+        if is_lessors:
+            return building_limit
+        return payroll or building_limit
+    if exp_base == "LOI":
+        if is_lessors:
+            return building_limit
+        if insured_status == "O" and is_nonzero_amount(bpp_limit):
+            return bpp_limit
+        return building_limit
+
+    # Default / else branch in LiabilityPremiumNB1 uses BuildingLimit.
+    return building_limit or resolve_liability_occurrence_limit(inputs, outputs, evaluations)
 
 
 def _merge_si_from_arrays(log_path: str | Path) -> dict[str, str]:
@@ -210,7 +321,8 @@ def _coverage_sum_insured(
     evaluations: dict[str, str],
 ) -> str | None:
     if code == "400127" or ruleset_name == "Liability":
-        return resolve_liability_occurrence_limit(inputs, outputs, evaluations)
+        # Limits / Sum Insured follow LiabilityPremiumNB1 exposure logic.
+        return resolve_liability_rating_limit(inputs, outputs, evaluations)
     return _first_scalar(
         outputs.get("BuildingCoverIncrementalSI")
         or outputs.get("CoverageIncrementalSI")
