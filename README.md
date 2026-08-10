@@ -7,26 +7,31 @@ execution data from local paths or URLs.
 
 - Python 3.12+
 
-## Setup
+## Use locally (GUI)
 
 ```bash
+git clone https://github.com/Ranjith0222/Logs.git
+cd Logs
+
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
+
+logs gui --host 127.0.0.1 --port 8000
 ```
 
-## GUI
+Open **http://127.0.0.1:8000**
 
-Launch the extract builder UI:
+1. Drop / choose a UW ItemRating `.log` file  
+2. Keep ruleset `Building` and mode `Building factors`  
+3. Click **Extract**  
+4. Use **Download JSON** or **Download CSV** to save the factor values  
+
+You can also run:
 
 ```bash
-logs gui
-# or
 logs-gui --host 0.0.0.0 --port 8000
 ```
-
-Open http://127.0.0.1:8000, drop a UW ItemRating `.log` file, keep ruleset
-`Building`, and extract the rating factors.
 
 ## CLI
 

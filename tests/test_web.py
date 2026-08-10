@@ -13,6 +13,8 @@ def test_gui_index_serves_brand() -> None:
     assert response.status_code == 200
     assert "LOGS" in response.text
     assert "Extract Building rating factors" in response.text
+    assert "Download JSON" in response.text
+    assert "Download CSV" in response.text
 
 
 def test_gui_extract_building_factors() -> None:
